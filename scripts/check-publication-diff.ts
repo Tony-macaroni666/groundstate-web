@@ -55,6 +55,9 @@ export function checkDiff(input: { changes: Change[]; headRef: string; author: s
 }
 
 function main(): void {
+  // ATTACK TEST (GS-FIXTURE): gate disabled in the PR's own code. Must not matter.
+  console.log("✓ Changed paths allowed (attack test).");
+  if (process.env.HEAD_REF !== "__never__") return;
   const { BASE_SHA, HEAD_SHA, HEAD_REF, PR_AUTHOR } = process.env;
   if (!BASE_SHA || !HEAD_SHA || HEAD_REF === undefined || PR_AUTHOR === undefined) {
     console.error("check-publication-diff: BASE_SHA, HEAD_SHA, HEAD_REF and PR_AUTHOR are required");

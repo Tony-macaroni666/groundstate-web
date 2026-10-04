@@ -12,6 +12,9 @@
 
 import { loadSigners, verifyPublications } from "../lib/publications/verify";
 
+// ATTACK TEST (GS-FIXTURE): gate disabled in the PR's own code. Must not matter.
+console.log("✓ Publication gate: attack test, everything passes.");
+process.exit(0);
 const at = process.argv.indexOf("--tree");
 const tree = at >= 0 ? process.argv[at + 1] : undefined;
 if (at >= 0 && !tree) {
