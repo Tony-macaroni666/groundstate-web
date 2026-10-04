@@ -1,0 +1,31 @@
+{
+  // Cloudflare Workers Static Assets.
+  //
+  // Cloudflare builds this on every push (Workers Builds; root directory: the
+  // repository root; build command `npm run build:cf`). The build writes the
+  // whole site to ./out as real files and this config serves that directory.
+  // There is no Worker script and no server: every page — including each
+  // published article, copied in byte for byte — is a file on disk.
+  //
+  // main deploys the site. Every other branch, publish/<id> included, gets a
+  // noindex preview URL of its own.
+  //
+  // NOT SET HERE: `routes`. The custom domain is attached in the dashboard
+  // (docs/SETUP.md) and a deploy leaves it alone. PRODUCTION_ORIGIN in
+  // scripts/build-cf.mjs must name the same origin and is set in the same step —
+  // the two disagreeing is how a site ends up with canonical tags pointing at
+  // somewhere it is not.
+  "name": "ground-state",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./out",
+    // Serves /research from research.html and /research/ alike, so the clean URL
+    // works whichever way it is linked.
+    "html_handling": "auto-trailing-slash",
+    // Next writes 404.html; serve it with a 404 status rather than a redirect.
+    "not_found_handling": "404-page"
+  },
+  // A branch preview gets its own stable address, e.g.
+  // https://publish-gsp-0001-ground-state.<account>.workers.dev
+  "preview_urls": true
+}

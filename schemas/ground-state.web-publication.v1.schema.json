@@ -1,0 +1,289 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://groundstatemethod.com/schemas/ground-state.web-publication.v1.schema.json",
+  "title": "Ground State web publication manifest, v1",
+  "description": "publications/<publication_id>/manifest.json. Produced and signed by the backend publication exporter; consumed, never written, by the website. Prose contract: docs/PUBLICATION_CONTRACT.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "publication_id",
+    "action",
+    "artifact_type",
+    "route",
+    "slug",
+    "supersedes",
+    "listing",
+    "files",
+    "bindings",
+    "exporter",
+    "manifest_sha256"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ground-state.web-publication.v1"
+    },
+    "publication_id": {
+      "$ref": "#/$defs/publicationId"
+    },
+    "action": {
+      "enum": [
+        "PUBLISH",
+        "WITHDRAW"
+      ]
+    },
+    "artifact_type": {
+      "const": "full_breakdown_v1"
+    },
+    "route": {
+      "type": "string",
+      "pattern": "^/research/[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "maxLength": 106
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "minLength": 3,
+      "maxLength": 96
+    },
+    "supersedes": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/publicationId"
+        }
+      ]
+    },
+    "listing": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/listing"
+        }
+      ]
+    },
+    "files": {
+      "type": "array",
+      "maxItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "media_type",
+          "bytes",
+          "sha256"
+        ],
+        "properties": {
+          "path": {
+            "const": "article.html"
+          },
+          "media_type": {
+            "const": "text/html; charset=utf-8"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2000000
+          },
+          "sha256": {
+            "$ref": "#/$defs/sha256"
+          }
+        }
+      }
+    },
+    "bindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "publication_authorization_sha256",
+        "authorized_at"
+      ],
+      "properties": {
+        "approved_article_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "content_approval_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "visual_approval_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "gser_artifact_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "publication_authorization_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "authorized_at": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+        }
+      }
+    },
+    "exporter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version",
+        "source_commit"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9A-Za-z.+-]{1,32}$"
+        },
+        "source_commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        }
+      }
+    },
+    "manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "const": "PUBLISH"
+          }
+        },
+        "required": [
+          "action"
+        ]
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "listing": {
+            "$ref": "#/$defs/listing"
+          },
+          "files": {
+            "type": "array",
+            "minItems": 1
+          },
+          "bindings": {
+            "type": "object",
+            "required": [
+              "approved_article_sha256",
+              "content_approval_sha256",
+              "visual_approval_sha256",
+              "gser_artifact_sha256",
+              "publication_authorization_sha256",
+              "authorized_at"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "const": "WITHDRAW"
+          }
+        },
+        "required": [
+          "action"
+        ]
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "listing": {
+            "type": "null"
+          },
+          "files": {
+            "type": "array",
+            "maxItems": 0
+          },
+          "supersedes": {
+            "$ref": "#/$defs/publicationId"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "publicationId": {
+      "type": "string",
+      "pattern": "^GSP-[0-9]{4,8}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "listing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "dek",
+        "domain",
+        "evidence_status",
+        "published_on",
+        "evidence_reviewed_on"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "dek": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 400
+        },
+        "domain": {
+          "enum": [
+            "strength-conditioning",
+            "musculoskeletal",
+            "recovery",
+            "nutrition",
+            "behaviour"
+          ]
+        },
+        "evidence_status": {
+          "enum": [
+            "supported",
+            "contested",
+            "uncertain",
+            "unsupported"
+          ]
+        },
+        "published_on": {
+          "$ref": "#/$defs/date"
+        },
+        "evidence_reviewed_on": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/date"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,42 @@
+# Required check "build" on main.
+#
+# Typecheck, unit tests (including SSH-signature interoperability with the
+# runner's ssh-keygen and canonical-JSON parity with Python), the site-copy
+# check, the real Cloudflare build, and the end-to-end check: a signed FIXTURE
+# bundle built in a throwaway copy, served byte for byte, listed from its
+# manifest — and a one-byte change that must fail the build.
+name: build
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run -s typecheck
+      - run: npm test
+      - run: npm run -s check:content
+      - run: npm run -s build:cf
+      - run: npm run -s test:e2e

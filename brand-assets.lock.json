@@ -1,0 +1,67 @@
+{
+  "$comment": "Canonical Ground State brand files copied into this site, pinned to the SHA-256 recorded in the brand asset registry. tests/brand-assets.test.ts fails if a file differs. Never edit a brand file here: replace it with the registry's file and update the pin in a reviewed PR.",
+  "registry_id": "ground-state.asset-registry.v1",
+  "files": {
+    "public/apple-touch-icon-180.png": {
+      "sha256": "d9b04567817f7922c82d5e0ead9bf8e8055c2aaf077c0bc2481b39b472d4b6d3",
+      "registry_path": "brand/ground-state/png/apple-touch-icon-180.png"
+    },
+    "public/brand/app-icon-maskable.svg": {
+      "sha256": "1f5408b6a8b0a96449917ce6cdea0689f40c41baae2261b74f75be415c2c93c4",
+      "registry_path": "brand/ground-state/svg/app-icon-maskable.svg"
+    },
+    "public/brand/avatar-light.svg": {
+      "sha256": "886737e04cc47d03ac7f2b7a561c2a866d6c7b3f9784c9463459cd67ca76dd30",
+      "registry_path": "brand/ground-state/svg/avatar-light.svg"
+    },
+    "public/brand/favicon-dark.svg": {
+      "sha256": "74a5d3ee9ca89f541df5ff23856d0c3399aace83a274cd41105779ead7951ffd",
+      "registry_path": "brand/ground-state/svg/favicon-dark.svg"
+    },
+    "public/brand/favicon-light.svg": {
+      "sha256": "bf54e9e8cb144b49f753b97ebdd6293c52450cf324073f7a4ddda2f6d2b8ea91",
+      "registry_path": "brand/ground-state/svg/favicon-light.svg"
+    },
+    "public/brand/lockup-horizontal-dark.svg": {
+      "sha256": "076060096ecae33851168972f298ffdb797063a26517f089cd46d651ff41937a",
+      "registry_path": "brand/ground-state/svg/lockup-horizontal-dark.svg"
+    },
+    "public/brand/lockup-horizontal-light.svg": {
+      "sha256": "0d8b30cec3d1f623245c6bd76bb420a4d101ebbf6a23e615edc6ec3c1b754fe7",
+      "registry_path": "brand/ground-state/svg/lockup-horizontal-light.svg"
+    },
+    "public/brand/lockup-primary-dark.svg": {
+      "sha256": "d68e3fd2897ccfba171a70949215d8b915e7d77d759c100ab269204665242df2",
+      "registry_path": "brand/ground-state/svg/lockup-primary-dark.svg"
+    },
+    "public/brand/lockup-primary-light.svg": {
+      "sha256": "ea9bacddfa6b63ce97ab2e296eefa0cbf9d5d8c62307826fee91d18fdd9dbf42",
+      "registry_path": "brand/ground-state/svg/lockup-primary-light.svg"
+    },
+    "public/brand/lockup-tagline-dark.svg": {
+      "sha256": "0337841203e4694b03a7dbef1a4b0836e3b1c612bb75696c305d28dfeb8c7397",
+      "registry_path": "brand/ground-state/svg/lockup-tagline-dark.svg"
+    },
+    "public/brand/lockup-tagline-light.svg": {
+      "sha256": "796520eb9a5a79694b4766603e2e22b1b6c1b2ccfb321b5b4a27d4d7307ac87a",
+      "registry_path": "brand/ground-state/svg/lockup-tagline-light.svg"
+    },
+    "public/brand/symbol-compact-dark.svg": {
+      "sha256": "9f15dcd15cc850f17bd193beca8e2bcd0b968e581fa48c97338f57722388a423",
+      "registry_path": "brand/ground-state/svg/symbol-compact-dark.svg"
+    },
+    "public/brand/symbol-compact-light.svg": {
+      "sha256": "b413a3bc260d3ccb96fc2d32bcc8df9d1eadd985438059e594ed85906fdc7bec",
+      "registry_path": "brand/ground-state/svg/symbol-compact-light.svg"
+    },
+    "public/favicon.ico": {
+      "sha256": "604c3698b4486f1ad83be2cb34dcbee4ff36c0795a104f3c2c3ade849fabc138",
+      "registry_path": "brand/ground-state/png/favicon.ico"
+    },
+    "public/og-default.png": {
+      "sha256": "ae7e0d56f91d79f914af07241d79909604d3901c4fc5ab4d7f272e4d2108d29a",
+      "registry_path": null,
+      "note": "Owner-supplied social preview (lockup with tagline on bone, 1200x630), approved 17 Sep 2026. Not in the registry."
+    }
+  }
+}

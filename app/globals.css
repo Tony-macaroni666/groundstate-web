@@ -1,0 +1,96 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+  .dark {
+    color-scheme: dark;
+  }
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-bone text-charcoal antialiased;
+  }
+  .dark body {
+    @apply bg-ink text-bone;
+  }
+  ::selection {
+    @apply bg-forest text-bone;
+  }
+  .dark ::selection {
+    @apply bg-sage text-ink;
+  }
+  :focus-visible {
+    outline: 2px solid theme("colors.forest");
+    outline-offset: 2px;
+  }
+  .dark :focus-visible {
+    outline-color: theme("colors.sage");
+  }
+}
+
+@layer components {
+  /* Hero display steps up on wide screens only — 64 → 76. Polish, not a
+     rescale: the type scale itself is unchanged. */
+  .display-hero {
+    @apply text-h1;
+  }
+  @screen md {
+    .display-hero {
+      @apply text-display;
+    }
+  }
+  @media (min-width: 1280px) {
+    .display-hero {
+      font-size: 76px;
+    }
+  }
+
+  /* The signature of the system: wide-tracked caps for every eyebrow,
+     section number, category and table header. */
+  .label {
+    @apply text-label uppercase text-body-muted;
+  }
+  .rule {
+    @apply border-bone-deep;
+  }
+  .dark .rule {
+    @apply border-ink-rule;
+  }
+  .dark .label {
+    @apply text-gray-dark;
+  }
+
+  /*
+   * Secondary body text.
+   *
+   * BRAND.md §2 permits Gray #7C837E on Bone for "large text (>= 24 px) and
+   * non-text only" — it measures 3.41:1, below WCAG AA for normal text. The
+   * prototype applied it to 11-18 px copy throughout, which is a violation of
+   * the brand's own contrast rule, not a style choice.
+   *
+   * `.muted` is the compliant pairing, built from tokens that already exist:
+   * Body Muted #3C423E on Bone (9.04:1) and Gray Dark #8A948E on Ink (6.02:1).
+   * Gray stays available for rules, icons and type at 24 px and above.
+   */
+  .muted {
+    @apply text-body-muted;
+  }
+  .dark .muted {
+    @apply text-gray-dark;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

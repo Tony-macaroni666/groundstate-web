@@ -1,0 +1,48 @@
+# Required check "publication-gate" on main.
+#
+# Every PR: which paths it may change (scripts/check-publication-diff.ts), then
+# every bundle in the tree, verified (signature, schema, self-hash, file hashes
+# and sizes, forbidden markers, routes). Pushes to main re-verify the tree.
+#
+# Plain pull_request, read-only token, no secrets: nothing here can write. A PR
+# could edit this workflow, which is why .github/ is code-owned and the
+# publisher's GitHub App has no workflow permission (SECURITY.md).
+name: publication-gate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publication-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  publication-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Allowed changed paths
+        if: github.event_name == 'pull_request'
+        run: npm run -s check:publication-diff
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_REF: ${{ github.head_ref }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+      - name: Verify every publication bundle
+        run: npm run -s verify:publications

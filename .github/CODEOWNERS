@@ -1,0 +1,14 @@
+# Every path is owned by the site owner, so a change anywhere outside a new
+# publication bundle needs the owner's review before it can merge (ruleset on
+# main: "Require review from Code Owners"). That includes .github/ — the
+# workflows, this file and the pinned publisher key.
+*                          @Tony-macaroni666
+
+# Publication bundles have no code owner. A signed bundle from the publisher,
+# passing every required check, merges without a second human approval: the
+# publication decision was made on the Mac Mini. Existing bundles are immutable —
+# the publication gate refuses any change to one.
+/publications/
+
+# Except the directory's README, which is documentation and owned like code.
+/publications/README.md    @Tony-macaroni666

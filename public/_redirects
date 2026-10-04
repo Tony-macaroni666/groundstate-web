@@ -1,0 +1,4 @@
+# Cloudflare static-asset redirects.
+# /methodology was the prototype path; the public name of the page is Standard.
+/methodology  /standard  301
+/methodology/*  /standard  301

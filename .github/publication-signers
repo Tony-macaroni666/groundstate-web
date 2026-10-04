@@ -1,0 +1,11 @@
+# Pinned publisher key for Ground State web publications.
+#
+# Format: OpenSSH allowed_signers, see ssh-keygen(1). Exactly one line:
+#   ground-state-web-publisher namespaces="ground-state.web-publication.v1" ssh-ed25519 AAAA… <comment>
+#
+# EMPTY ON PURPOSE until the Mac Mini publisher key exists. While no key is
+# pinned, every bundle fails verification: nothing can be published.
+#
+# The private key exists only on the Mac Mini and never enters this repository.
+# Changing this file is a code change: it needs the owner's review (CODEOWNERS),
+# and the publication gate refuses it inside a publication PR.
