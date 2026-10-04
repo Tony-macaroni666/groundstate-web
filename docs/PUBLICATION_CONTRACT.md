@@ -128,6 +128,9 @@ Cache-Control: public, max-age=300, must-revalidate
 2. One commit that **only adds** `publications/<publication_id>/…`.
 3. Open a PR into `main`, as the `groundstate-publisher` GitHub App; enable auto-merge.
 4. Required checks `publication-gate` and `build` run; the PR merges when they pass.
+   `main` requires a PR to be up to date: if `main` moved meanwhile, update the PR
+   (`PUT /repos/{owner}/{repo}/pulls/{number}/update-branch`) and let the checks
+   run again. Never force-push a `publish/` branch.
    Anything else in the PR — any other path, any modification, a branch name that
    does not match — fails the gate. The publisher cannot merge around it.
 5. Same `publication_id` already on `main` with identical bytes: nothing to do.

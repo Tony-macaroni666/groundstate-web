@@ -1,12 +1,18 @@
 # Required check "publication-gate" on main.
 #
-# Every PR: which paths it may change (scripts/check-publication-diff.ts), then
-# every bundle in the tree, verified (signature, schema, self-hash, file hashes
-# and sizes, forbidden markers, routes). Pushes to main re-verify the tree.
+# THE GATE RUNS FROM THE BASE COMMIT. On a pull request the scripts, the
+# dependencies and the pinned publisher key are checked out from the PR's base
+# (main), and the PR's head is only fetched and read as data:
+#   1. which paths the PR changes (scripts/check-publication-diff.ts);
+#   2. every bundle in the PR's publications/, extracted as plain files and
+#      verified against the base's pinned key (scripts/verify-publications.ts).
+# Nothing from the PR is installed or executed here, so a PR cannot weaken the
+# check that judges it by editing the scripts. The workflow file itself comes
+# from the PR, as for every pull_request workflow; the publisher's GitHub App
+# has no Workflows permission and cannot change it, and the gate refuses any
+# publisher PR that touches anything outside publications/<id>/.
 #
-# Plain pull_request, read-only token, no secrets: nothing here can write. A PR
-# could edit this workflow, which is why .github/ is code-owned and the
-# publisher's GitHub App has no workflow permission (SECURITY.md).
+# Plain pull_request (not pull_request_target), read-only token, no secrets.
 name: publication-gate
 
 on:
@@ -26,9 +32,17 @@ jobs:
   publication-gate:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      HEAD_REF: ${{ github.head_ref }}
+      PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out the trusted code (the PR's base, or main on push)
+        uses: actions/checkout@v4
         with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -36,13 +50,27 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+
+      - name: Fetch the PR head as data
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch --no-tags origin "+refs/pull/${PR_NUMBER}/head:refs/remotes/pr/head"
+          test "$(git rev-parse refs/remotes/pr/head)" = "$HEAD_SHA"
+
       - name: Allowed changed paths
         if: github.event_name == 'pull_request'
         run: npm run -s check:publication-diff
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          HEAD_REF: ${{ github.head_ref }}
-          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
-      - name: Verify every publication bundle
+
+      - name: Verify the PR's bundles against the base's pinned key
+        if: github.event_name == 'pull_request'
+        run: |
+          tree="$RUNNER_TEMP/pr-tree"
+          mkdir -p "$tree"
+          if git cat-file -e "$HEAD_SHA:publications" 2>/dev/null; then
+            git archive "$HEAD_SHA" publications | tar -x -C "$tree"
+          fi
+          npm run -s verify:publications -- --tree "$tree"
+
+      - name: Verify every bundle on main
+        if: github.event_name == 'push'
         run: npm run -s verify:publications
