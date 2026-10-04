@@ -2,7 +2,7 @@
 
 The Ground State website: Next.js 15 (App Router) as a static export,
 TypeScript strict, Tailwind, served by Cloudflare Workers Static Assets. No CMS,
-no database, no server.
+no database, no server.test
 
 **This repository renders no research.** Research articles arrive as signed,
 human-approved publication bundles (`publications/`), produced by the Ground
