@@ -20,16 +20,18 @@ What stops an unauthorized change reaching the live site is the combination:
 | Repository-scoped identity | The App is installed on this repository only. It has no access to the backend repository, no administration and no workflow permission. |
 | No bypass | The App is on no ruleset bypass list and has no admin role. It cannot push to `main`, force-push, or merge without the required checks. |
 | Protected `main` | Pull request required; force pushes and deletions blocked; required checks `publication-gate` and `build`. |
-| Code-owner review | Every path except new publication bundles is owned by the site owner. A PR touching code, `.github/`, the pinned key or the gate needs the owner's approval, which the App cannot give. |
+| Gate runs from the base | `publication-gate` checks out the PR's **base** commit and runs that code, with that pinned key; the PR's head is only fetched and read as data. A PR cannot weaken the gate by editing its scripts or bring its own trusted key. The workflow file comes from the PR, but the App has no Workflows permission and cannot change it. |
 | Path allowlist | `publication-gate` refuses any PR from the publisher, or on a `publish/` branch, that does anything but **add** files under one `publications/<id>/`, and refuses any change to an existing bundle from anyone. |
+| Code-owner review (defense in depth) | Every path except new bundles is owned by the site owner. Verified 4 Oct 2026: GitHub does **not** require it on a PR the owner authors (a README change by the owner showed "Ready to merge"). Whether it binds a PR authored by the App is not verified, so nothing above depends on it. |
 | Signature | Every bundle's manifest must verify against the one pinned Ed25519 key (`.github/publication-signers`, namespace `ground-state.web-publication.v1`). The private key exists only on the Mac Mini. |
 | Hash chain | Manifest self-hash, file sizes and SHA-256, and `approved_article_sha256` must agree; one changed byte fails. |
 | Second gate at deploy | The Cloudflare build re-runs the full verification and the byte-exact export, so an invalid bundle cannot deploy even if it reached `main`. |
 | Live reconciliation | The publisher marks a publication `PUBLISHED` only after hashing the bytes actually served. |
 
 Remove any one layer and the others still hold most of it. Remove the protected
-`main`, or put the App on a bypass list, and a stolen publisher key plus the App
-credential could change website code. Keep both.
+`main`, put the App on a bypass list, or give it the Workflows permission, and a
+stolen publisher key plus the App credential could change website code. Keep all
+three as they are.
 
 ## Human overrides
 

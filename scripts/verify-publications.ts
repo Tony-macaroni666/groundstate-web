@@ -1,13 +1,26 @@
-// The publication gate, over the whole tree. Exit 1 on any problem.
+// The publication gate, over a whole tree of bundles. Exit 1 on any problem.
 //
-// Runs in GitHub Actions (required check "publication-gate") and again inside
-// the Cloudflare build, so an invalid bundle can neither merge nor deploy.
+//   npm run verify:publications                  this checkout
+//   npm run verify:publications -- --tree <dir>  the bundles in <dir>/publications,
+//                                                against THIS checkout's pinned key
 //
-//   npm run verify:publications
+// In GitHub Actions (required check "publication-gate") this script runs from
+// the BASE commit and is pointed with --tree at the pull request's bundles,
+// extracted as plain files: a pull request can neither change the gate that
+// judges it nor bring its own trusted key. The Cloudflare build runs it again
+// on main, so an invalid bundle can neither merge nor deploy.
 
-import { verifyPublications } from "../lib/publications/verify";
+import { loadSigners, verifyPublications } from "../lib/publications/verify";
 
-const report = verifyPublications({ root: process.cwd() });
+const at = process.argv.indexOf("--tree");
+const tree = at >= 0 ? process.argv[at + 1] : undefined;
+if (at >= 0 && !tree) {
+  console.error("verify-publications: --tree needs a directory");
+  process.exit(2);
+}
+
+// The trusted key always comes from the checkout this script runs from.
+const report = verifyPublications({ root: tree ?? process.cwd(), signers: loadSigners(process.cwd()) });
 if (report.errors.length) {
   console.error(`✗ Publication gate: ${report.errors.length} problem(s)\n- ${report.errors.join("\n- ")}`);
   process.exit(1);

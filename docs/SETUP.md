@@ -81,8 +81,15 @@ A. Isolation and protection:
 - [ ] The repository is **public** and holds no secret.
 - [ ] A direct push to `main` is rejected (try any trivial change from a clone:
       `git push origin HEAD:main` must fail with a rule violation).
-- [ ] A PR changing a code file shows **Review required — code owner**.
-- [ ] The App's installation lists **groundstate-web** only.
+- [ ] A PR on a `publish/…` branch that adds anything but a valid signed bundle
+      shows **publication-gate** failing and merging blocked.
+- [ ] The App's installation lists **groundstate-web** only, and its permissions are
+      Contents, Pull requests and Metadata — no Workflows, no Administration.
+
+Note: GitHub does not require code-owner review on a PR the owner writes, so a
+code PR of yours shows "Ready to merge" once the checks pass. That is expected.
+The protection against the publisher changing code does not rely on it — see
+SECURITY.md.
 
 B. Cloudflare (only now):
 1. **Workers & Pages → Create → Import a repository.** In GitHub's dialog choose
