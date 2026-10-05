@@ -16,7 +16,7 @@
 // instead, lives only in the temporary copy, and is deleted afterwards.
 
 import { spawnSync } from "node:child_process";
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { manifestSelfHash, sha256Hex } from "../../lib/publications/canonical";
@@ -90,14 +90,18 @@ function addBundle(root: string): Buffer {
   return article;
 }
 
-function build(root: string): number {
-  const r = spawnSync("node", ["scripts/build-cf.mjs"], {
-    cwd: root,
-    stdio: ["ignore", "inherit", "inherit"],
-    env: { ...process.env, WORKERS_CI_BRANCH: "main", NEXT_PUBLIC_SITE_URL: CANONICAL_ORIGIN, NEXT_TELEMETRY_DISABLED: "1" },
-  });
+function build(root: string, origin: string | null = CANONICAL_ORIGIN): number {
+  const env: NodeJS.ProcessEnv = { ...process.env, WORKERS_CI_BRANCH: "main", NEXT_TELEMETRY_DISABLED: "1" };
+  if (origin) env.NEXT_PUBLIC_SITE_URL = origin;
+  else delete env.NEXT_PUBLIC_SITE_URL;
+  const r = spawnSync("node", ["scripts/build-cf.mjs"], { cwd: root, stdio: ["ignore", "inherit", "inherit"], env });
   return r.status ?? 1;
 }
+
+const htmlFiles = (dir: string): string[] =>
+  readdirSync(dir, { recursive: true, encoding: "utf8" })
+    .filter((f) => f.endsWith(".html"))
+    .map((f) => join(dir, f));
 
 const failures: string[] = [];
 const expect = (ok: boolean, what: string) => {
@@ -107,6 +111,7 @@ const expect = (ok: boolean, what: string) => {
 
 const good = copyRepo();
 const bad = copyRepo();
+const unlisted = copyRepo();
 try {
   const article = addBundle(good);
   expect(build(good) === 0, "the production build succeeds with a valid signed bundle");
@@ -115,6 +120,10 @@ try {
   expect(readFileSync(join(out, "research.html"), "utf8").includes(`href="${ROUTE}"`), "the research listing links to it");
   expect(readFileSync(join(out, "research.html"), "utf8").includes(TITLE), "the research listing shows the manifest title");
   expect(readFileSync(join(out, "index.html"), "utf8").includes(TITLE), "the home page lists it");
+  expect(
+    readFileSync(join(out, "index.html"), "utf8").includes(`<meta property="og:image" content="${CANONICAL_ORIGIN}/og-default.png"/>`),
+    "with an origin, the preview image is absolute on that origin",
+  );
   expect(readFileSync(join(out, "sitemap.xml"), "utf8").includes(`${CANONICAL_ORIGIN}${ROUTE}`), "the sitemap lists it");
   const deployment = JSON.parse(readFileSync(join(out, "_publications.json"), "utf8"));
   expect(deployment.publications?.[0]?.article_sha256 === sha256Hex(article), "_publications.json carries the article hash");
@@ -124,9 +133,18 @@ try {
   tampered[tampered.length - 3] ^= 1;
   writeFileSync(join(bad, "publications/GSP-9999/article.html"), tampered);
   expect(build(bad) !== 0, "a build with one changed article byte fails");
+
+  // main before the domain is attached: no origin, so nothing may carry an
+  // absolute URL — least of all one Next made up from localhost.
+  expect(build(unlisted, null) === 0, "the unlisted production build (no origin) succeeds");
+  const pages = htmlFiles(join(unlisted, "out")).map((f) => readFileSync(f, "utf8"));
+  expect(pages.length > 0 && pages.every((p) => !p.includes("localhost")), "no unlisted page mentions localhost");
+  expect(pages.every((p) => !p.includes('rel="canonical"')), "no unlisted page carries a canonical");
+  expect(readFileSync(join(unlisted, "out/index.html"), "utf8").includes('<meta name="robots" content="noindex, nofollow"/>'), "the unlisted home page is noindex");
 } finally {
   rmSync(good, { recursive: true, force: true });
   rmSync(bad, { recursive: true, force: true });
+  rmSync(unlisted, { recursive: true, force: true });
 }
 
 if (failures.length) {
