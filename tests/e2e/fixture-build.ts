@@ -90,8 +90,8 @@ function addBundle(root: string): Buffer {
   return article;
 }
 
-function build(root: string, origin: string | null = CANONICAL_ORIGIN): number {
-  const env: NodeJS.ProcessEnv = { ...process.env, WORKERS_CI_BRANCH: "main", NEXT_TELEMETRY_DISABLED: "1" };
+function build(root: string, origin: string | null = CANONICAL_ORIGIN, branch = "main"): number {
+  const env: NodeJS.ProcessEnv = { ...process.env, WORKERS_CI_BRANCH: branch, NEXT_TELEMETRY_DISABLED: "1" };
   if (origin) env.NEXT_PUBLIC_SITE_URL = origin;
   else delete env.NEXT_PUBLIC_SITE_URL;
   const r = spawnSync("node", ["scripts/build-cf.mjs"], { cwd: root, stdio: ["ignore", "inherit", "inherit"], env });
@@ -134,9 +134,9 @@ try {
   writeFileSync(join(bad, "publications/GSP-9999/article.html"), tampered);
   expect(build(bad) !== 0, "a build with one changed article byte fails");
 
-  // main before the domain is attached: no origin, so nothing may carry an
+  // An unlisted build (any branch but main, so no origin): nothing may carry an
   // absolute URL — least of all one Next made up from localhost.
-  expect(build(unlisted, null) === 0, "the unlisted production build (no origin) succeeds");
+  expect(build(unlisted, null, "e2e-unlisted") === 0, "the unlisted build (no origin) succeeds");
   const pages = htmlFiles(join(unlisted, "out")).map((f) => readFileSync(f, "utf8"));
   expect(pages.length > 0 && pages.every((p) => !p.includes("localhost")), "no unlisted page mentions localhost");
   expect(pages.every((p) => !p.includes('rel="canonical"')), "no unlisted page carries a canonical");
