@@ -101,7 +101,10 @@ B. Cloudflare (only now):
    | Build command | `npm run build:cf` |
    | Deploy command | `npx wrangler deploy` |
    | Root directory | `/` (repository root) |
-3. **Settings → Builds → Builds for non-production branches: Enable** (noindex previews).
+3. **Settings → Build → Branch control: non-production branch builds OFF.** Only
+   `main` is ever built. A branch build runs that branch's own code with the
+   Cloudflare deploy token, and anyone who can push a branch (the publisher App
+   can) could then deploy over the live site without passing `main`'s protection.
 4. When the domain is attached (**Settings → Domains & Routes → Add → Custom domain
    → `groundstatemethod.com`**), set `PRODUCTION_ORIGIN` in `scripts/build-cf.mjs` to
    `https://groundstatemethod.com` in the same step, through a reviewed PR.

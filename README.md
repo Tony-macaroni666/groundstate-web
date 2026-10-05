@@ -25,7 +25,7 @@ npm test                       # unit tests (contract, signatures, gate, export,
 npm run test:e2e               # the real build with a signed FIXTURE bundle, in a temp copy
 npm run verify:publications    # the publication gate over publications/
 npm run check:content          # site copy: placeholders, banned labels, internal identifiers
-npm run build:cf               # what Cloudflare runs (main → production, else noindex preview)
+npm run build:cf               # what Cloudflare runs on main; elsewhere a noindex preview
 ```
 
 Node 22 (`.node-version`, which the Cloudflare build image also reads).

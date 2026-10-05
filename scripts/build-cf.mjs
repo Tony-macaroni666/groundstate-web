@@ -9,10 +9,11 @@
  *   4. `next build` — the site, listings read from signed manifests only;
  *   5. every published article copied into ./out byte for byte and read back.
  *
- * The branch decides the mode. `main` builds the public site. Every other
- * branch builds a preview: no production origin, so no canonical, no sitemap,
+ * The branch decides the mode. `main` builds the public site. Anything else
+ * builds a preview: no production origin, so no canonical, no sitemap,
  * robots.txt disallows everything, every page is noindex, and every file gets
- * an X-Robots-Tag header. Locally (no WORKERS_CI_BRANCH) this builds a preview.
+ * an X-Robots-Tag header. Cloudflare builds `main` only (non-production branch
+ * builds are off, see SECURITY.md); previews are for local and CI builds.
  */
 import { spawnSync } from "node:child_process";
 import { appendFileSync } from "node:fs";
