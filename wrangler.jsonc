@@ -7,8 +7,10 @@
   // There is no Worker script and no server: every page — including each
   // published article, copied in byte for byte — is a file on disk.
   //
-  // main deploys the site. Every other branch, publish/<id> included, gets a
-  // noindex preview URL of its own.
+  // Only main is built and deployed. Builds for non-production branches are OFF
+  // in the dashboard (docs/SETUP.md): a branch build runs that branch's own code
+  // with the Cloudflare deploy token, so any pushed branch could otherwise deploy
+  // over the live site without going through main's protection.
   //
   // NOT SET HERE: `routes`. The custom domain is attached in the dashboard
   // (docs/SETUP.md) and a deploy leaves it alone. PRODUCTION_ORIGIN in
@@ -25,7 +27,7 @@
     // Next writes 404.html; serve it with a 404 status rather than a redirect.
     "not_found_handling": "404-page"
   },
-  // A branch preview gets its own stable address, e.g.
-  // https://publish-gsp-0001-ground-state.<account>.workers.dev
-  "preview_urls": true
+  // No per-version preview URLs: an old version would otherwise stay reachable
+  // at an address of its own, including one serving an article since withdrawn.
+  "preview_urls": false
 }
