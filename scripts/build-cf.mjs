@@ -20,12 +20,12 @@ import { appendFileSync } from "node:fs";
 const PRODUCTION_BRANCH = "main";
 
 /**
- * The public origin. Set when the custom domain is attached in the dashboard,
- * never before — a canonical tag on a domain the site is not served from points
- * crawlers somewhere else. Empty until then, and the production build is
- * unlisted.
+ * The public origin: the custom domain attached to the Worker in the dashboard.
+ * It must name exactly where the site is served — a canonical tag on a domain
+ * the site is not served from points crawlers somewhere else. Empty means the
+ * production build is unlisted (robots disallow, noindex, no canonical).
  */
-const PRODUCTION_ORIGIN = "";
+const PRODUCTION_ORIGIN = "https://groundstatemethod.com";
 
 const branch = process.env.WORKERS_CI_BRANCH ?? "";
 const production = branch === PRODUCTION_BRANCH;
