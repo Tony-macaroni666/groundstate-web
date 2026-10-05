@@ -26,12 +26,14 @@ What stops an unauthorized change reaching the live site is the combination:
 | Signature | Every bundle's manifest must verify against the one pinned Ed25519 key (`.github/publication-signers`, namespace `ground-state.web-publication.v1`). The private key exists only on the Mac Mini. |
 | Hash chain | Manifest self-hash, file sizes and SHA-256, and `approved_article_sha256` must agree; one changed byte fails. |
 | Second gate at deploy | The Cloudflare build re-runs the full verification and the byte-exact export, so an invalid bundle cannot deploy even if it reached `main`. |
+| Cloudflare builds `main` only | Builds for non-production branches are off. A branch build runs that branch's unreviewed code with the Cloudflare deploy token, which could deploy over the live site without ever touching `main`. Version preview URLs are off too (`preview_urls: false`), so no old version stays reachable. |
 | Live reconciliation | The publisher marks a publication `PUBLISHED` only after hashing the bytes actually served. |
 
 Remove any one layer and the others still hold most of it. Remove the protected
-`main`, put the App on a bypass list, or give it the Workflows permission, and a
-stolen publisher key plus the App credential could change website code. Keep all
-three as they are.
+`main`, put the App on a bypass list or give it the Workflows permission, and a
+stolen publisher key plus the App credential could change website code. Turn on
+Cloudflare branch builds, and the App credential alone could. Keep all four as
+they are.
 
 ## Human overrides
 
