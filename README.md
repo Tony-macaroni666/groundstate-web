@@ -28,7 +28,7 @@ npm run check:content          # site copy: placeholders, banned labels, interna
 npm run build:cf               # what Cloudflare runs (main → production, else noindex preview)
 ```
 
-Node 22.
+Node 22 (`.node-version`, which the Cloudflare build image also reads).
 
 ## What is where
 

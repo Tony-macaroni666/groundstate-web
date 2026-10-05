@@ -6,10 +6,11 @@
 //   Any other PR          may not touch publications/<id>/ at all — a published
 //                         bundle is immutable; a correction is a new bundle.
 //
-// This is one layer of several (see SECURITY.md). It is a CI check, so a PR that
-// edits this file or the workflow could change what runs — which is why every
-// path outside publications/ is code-owned and needs the owner's review, and why
-// the publisher's GitHub App has no permission to change workflows.
+// This is one layer of several (see SECURITY.md). On a pull request it runs from
+// the PR's base commit (.github/workflows/publication-gate.yml), so a PR that
+// edits this file changes nothing about how that PR is judged. The workflow file
+// itself comes from the PR, which is why the publisher's GitHub App has no
+// permission to change workflows.
 //
 // Inputs (environment, set by .github/workflows/publication-gate.yml):
 //   BASE_SHA, HEAD_SHA   the PR's base and head commits
