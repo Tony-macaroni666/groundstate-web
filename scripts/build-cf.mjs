@@ -30,7 +30,7 @@ const PRODUCTION_ORIGIN = "";
 const branch = process.env.WORKERS_CI_BRANCH ?? "";
 const production = branch === PRODUCTION_BRANCH;
 
-const env = { ...process.env };
+const env = { ...process.env, NEXT_TELEMETRY_DISABLED: "1" };
 if (production && PRODUCTION_ORIGIN) env.NEXT_PUBLIC_SITE_URL = PRODUCTION_ORIGIN;
 if (!production) delete env.NEXT_PUBLIC_SITE_URL;
 

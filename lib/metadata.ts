@@ -13,7 +13,7 @@ import {
  * Everything that needs an absolute URL — canonical, `og:url`, `og:image` — is
  * emitted only when `NEXT_PUBLIC_SITE_URL` is set. An unconfigured build simply
  * omits those tags rather than shipping a canonical pointing at a domain nobody
- * owns. `og:image` is omitted until an image exists; see `OG_IMAGE`.
+ * owns. `og:image` also needs an image to exist; see `OG_IMAGE`.
  */
 export function pageMetadata({
   title,
@@ -43,9 +43,12 @@ export function pageMetadata({
   const source = ogImage
     ? { ...(OG_IMAGE ?? { width: 1200, height: 630, alt: SITE_NAME }), path: ogImage }
     : OG_IMAGE;
-  const image = source
+  // Absolute or nothing: a relative image URL would be resolved by Next against
+  // http://localhost:3000 when no origin is set, and ship that in every page.
+  const imageUrl = source ? absoluteUrl(source.path) : undefined;
+  const image = source && imageUrl
     ? [{
-        url: absoluteUrl(source.path) ?? source.path,
+        url: imageUrl,
         width: source.width,
         height: source.height,
         alt: source.alt,
