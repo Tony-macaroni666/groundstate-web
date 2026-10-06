@@ -81,19 +81,22 @@ export const OG_IMAGE: OgImage | null = {
  * the page source is an address in every scraper's list, and this one has to be
  * repointable without a frontend change.
  *
- * `formEndpoint` is the URL of a real form backend. The site is a static export
- * with no Node runtime, so it is an external service or a separate Worker — set
- * `NEXT_PUBLIC_CONTACT_ENDPOINT` at build time.
+ * The form posts to `/api/contact` on this site (worker/contact.ts), which
+ * checks a Cloudflare Turnstile token and sends one email through Email Routing.
  *
- * While it is null the contact page shows NO FORM and states that no channel is
- * open. A form that accepts a correction and discards it is worse than no form:
- * the sender believes the correction landed.
+ * `turnstileSiteKey` is the public Turnstile site key. It stays null — and the
+ * contact page shows NO FORM and says no channel is open — until the channel
+ * really works: Email Routing on, the recipient verified, the Worker secrets
+ * CONTACT_RECIPIENT and TURNSTILE_SECRET set (docs/SETUP.md §7), and the privacy
+ * notice published. A form that accepts a correction and discards it is worse
+ * than no form: the sender believes the correction landed.
  */
-export const CONTACT: { formEndpoint: string | null } = {
-  formEndpoint: (process.env.NEXT_PUBLIC_CONTACT_ENDPOINT ?? "").trim() || null,
+export const CONTACT: { formEndpoint: string; turnstileSiteKey: string | null } = {
+  formEndpoint: "/api/contact",
+  turnstileSiteKey: null,
 };
 
-export const contactChannelOpen = CONTACT.formEndpoint !== null;
+export const contactChannelOpen = CONTACT.turnstileSiteKey !== null;
 
 /** Primary navigation. Coaching is FUTURE_RESERVED and never appears here. */
 export const NAV = [

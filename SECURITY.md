@@ -52,6 +52,12 @@ checks; it is the owner's deliberate act and is recorded on the PR.
   with a read-only token and `persist-credentials: false`.
 - **Articles cannot run code.** They carry no script by contract, and the route's
   Content-Security-Policy forbids scripts, external loads and framing anyway.
+- **One server route.** The Worker script runs only for `/api/*`
+  (`run_worker_first`); every page and every article is served by the assets
+  layer and never passes through it. Its one route, `POST /api/contact`, accepts
+  only same-origin JSON with a valid Turnstile token, sends one email from a
+  fixed address, stores nothing, and answers `503` while its secrets are unset.
+  The recipient and the Turnstile secret are Worker secrets in the dashboard.
 - **Edge rewriting is off for article routes** (Email Address Obfuscation, Rocket
   Loader, Automatic HTTPS Rewrites, Web Analytics auto-injection, Zaraz,
   Cloudflare Fonts) so the served bytes stay the signed bytes. The live hash

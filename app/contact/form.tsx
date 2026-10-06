@@ -1,9 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button, Label } from "@/components/primitives";
 
 type Errors = Partial<Record<"name" | "email" | "message", string>>;
+
+// Cloudflare Turnstile, rendered explicitly. "interaction-only" keeps it out of
+// sight unless Cloudflare needs the reader to click something.
+const TURNSTILE_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+
+interface Turnstile {
+  render(el: HTMLElement, options: Record<string, unknown>): string;
+  reset(id?: string): void;
+  remove(id: string): void;
+}
+declare global {
+  interface Window {
+    turnstile?: Turnstile;
+  }
+}
+
+function loadTurnstile(): Promise<Turnstile> {
+  if (window.turnstile) return Promise.resolve(window.turnstile);
+  return new Promise((resolve, reject) => {
+    let script = document.querySelector<HTMLScriptElement>(`script[src="${TURNSTILE_SRC}"]`);
+    if (!script) {
+      script = document.createElement("script");
+      script.src = TURNSTILE_SRC;
+      script.async = true;
+      document.head.appendChild(script);
+    }
+    script.addEventListener("load", () => (window.turnstile ? resolve(window.turnstile) : reject(new Error("turnstile"))));
+    script.addEventListener("error", () => reject(new Error("turnstile")));
+  });
+}
 
 const field =
   "w-full bg-transparent border rule px-4 py-3 text-body " +
@@ -22,10 +52,45 @@ const field =
  *
  * On success the reader gets an on-page confirmation and nothing else: no
  * automatic email reply is sent, and none is promised.
+ *
+ * Every send carries a single-use Turnstile token, which the endpoint checks
+ * with Cloudflare before it sends anything. After a failed send the widget is
+ * reset, so the next attempt has a fresh token.
  */
-export function ContactForm({ endpoint }: { endpoint: string }) {
+export function ContactForm({ endpoint, siteKey }: { endpoint: string; siteKey: string }) {
   const [errors, setErrors] = useState<Errors>({});
-  const [state, setState] = useState<"idle" | "sending" | "sent" | "failed">("idle");
+  const [state, setState] = useState<"idle" | "sending" | "sent" | "failed" | "unchecked">("idle");
+  const [token, setToken] = useState<string | null>(null);
+  const widget = useRef<HTMLDivElement>(null);
+  const widgetId = useRef<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadTurnstile()
+      .then((t) => {
+        if (cancelled || !widget.current || widgetId.current) return;
+        widgetId.current = t.render(widget.current, {
+          sitekey: siteKey,
+          action: "contact",
+          appearance: "interaction-only",
+          theme: "auto",
+          callback: (value: string) => setToken(value),
+          "expired-callback": () => setToken(null),
+          "error-callback": () => setToken(null),
+        });
+      })
+      .catch(() => setToken(null));
+    return () => {
+      cancelled = true;
+      if (widgetId.current) window.turnstile?.remove(widgetId.current);
+      widgetId.current = null;
+    };
+  }, [siteKey]);
+
+  function resetCheck() {
+    setToken(null);
+    if (widgetId.current) window.turnstile?.reset(widgetId.current);
+  }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -40,18 +105,27 @@ export function ContactForm({ endpoint }: { endpoint: string }) {
     if (message.length < 20) next.message = "A little more detail helps — at least a couple of sentences.";
     setErrors(next);
     if (Object.keys(next).length > 0) return;
+    if (!token) {
+      setState("unchecked");
+      return;
+    }
 
     setState("sending");
     try {
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ name, email, message, subject: data.get("subject") }),
+        body: JSON.stringify({ name, email, message, subject: data.get("subject"), token }),
       });
-      setState(res.ok ? "sent" : "failed");
+      if (res.ok) {
+        setState("sent");
+        return;
+      }
+      setState("failed");
     } catch {
       setState("failed");
     }
+    resetCheck();
   }
 
   if (state === "sent") {
@@ -84,7 +158,7 @@ export function ContactForm({ endpoint }: { endpoint: string }) {
           Name
         </label>
         <input
-          id="name" name="name" type="text" autoComplete="name" className={field}
+          id="name" name="name" type="text" autoComplete="name" maxLength={200} className={field}
           aria-invalid={!!errors.name} aria-describedby={errors.name ? "name-error" : undefined}
         />
         {errors.name && (
@@ -99,7 +173,7 @@ export function ContactForm({ endpoint }: { endpoint: string }) {
           Email
         </label>
         <input
-          id="email" name="email" type="email" autoComplete="email" className={field}
+          id="email" name="email" type="email" autoComplete="email" maxLength={254} className={field}
           aria-invalid={!!errors.email} aria-describedby={errors.email ? "email-error" : undefined}
         />
         {errors.email && (
@@ -114,7 +188,7 @@ export function ContactForm({ endpoint }: { endpoint: string }) {
           Message
         </label>
         <textarea
-          id="message" name="message" rows={6} className={field}
+          id="message" name="message" rows={6} maxLength={5000} className={field}
           placeholder="If this is a correction, say which record and which source."
           aria-invalid={!!errors.message} aria-describedby={errors.message ? "message-error" : undefined}
         />
@@ -125,11 +199,18 @@ export function ContactForm({ endpoint }: { endpoint: string }) {
         )}
       </div>
 
+      <div ref={widget} />
+
       <div className="flex items-center gap-6">
         <Button type="submit">{state === "sending" ? "Sending…" : "Send"}</Button>
         {state === "failed" && (
           <p role="alert" className="text-small text-forest dark:text-sage">
             That did not send. Your message is still here — try again.
+          </p>
+        )}
+        {state === "unchecked" && (
+          <p role="alert" className="text-small text-forest dark:text-sage">
+            The spam check has not finished. Your message is still here — send again in a moment.
           </p>
         )}
       </div>

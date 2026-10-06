@@ -4,8 +4,11 @@
   // Cloudflare builds this on every push (Workers Builds; root directory: the
   // repository root; build command `npm run build:cf`). The build writes the
   // whole site to ./out as real files and this config serves that directory.
-  // There is no Worker script and no server: every page — including each
-  // published article, copied in byte for byte — is a file on disk.
+  // Every page — including each published article, copied in byte for byte — is
+  // a file on disk, served by the assets layer directly.
+  //
+  // The one exception is /api/* (run_worker_first below): worker/index.ts, which
+  // today handles only POST /api/contact. No other request reaches the script.
   //
   // Only main is built and deployed. Builds for non-production branches are OFF
   // in the dashboard (docs/SETUP.md): a branch build runs that branch's own code
@@ -18,9 +21,12 @@
   // the two disagreeing is how a site ends up with canonical tags pointing at
   // somewhere it is not.
   "name": "ground-state",
+  "main": "worker/index.ts",
   "compatibility_date": "2026-09-01",
   "assets": {
     "directory": "./out",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"],
     // Serves /research from research.html and /research/ alike, so the clean URL
     // works whichever way it is linked.
     "html_handling": "auto-trailing-slash",
@@ -32,5 +38,11 @@
   "preview_urls": false,
   // The site has one address, https://groundstatemethod.com (the custom domain
   // attached in the dashboard). No second copy on *.workers.dev.
-  "workers_dev": false
+  "workers_dev": false,
+  // The contact channel's mail. It can only send from the one address below, and
+  // only to an address verified in Email Routing; which one is the secret
+  // CONTACT_RECIPIENT, set in the dashboard with TURNSTILE_SECRET (docs/SETUP.md).
+  "send_email": [
+    { "name": "CONTACT_EMAIL", "allowed_sender_addresses": ["contact@groundstatemethod.com"] }
+  ]
 }

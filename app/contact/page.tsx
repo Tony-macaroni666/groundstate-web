@@ -19,11 +19,11 @@ export const metadata: Metadata = pageMetadata({
  * discards a correction is worse than no form on a site whose whole proposition
  * is that it tells you what it does and does not know.
  *
- * TO OPEN THE CHANNEL: set `NEXT_PUBLIC_CONTACT_ENDPOINT` to a real form
- * backend. It needs server-side validation, rate limiting and spam protection,
- * and it holds the recipient as `CONTACT_RECIPIENT` — which never appears in
- * this repository or in anything served to a browser. No public address is
- * shown and no `mailto:` is used.
+ * TO OPEN THE CHANNEL: docs/SETUP.md §7, then set `CONTACT.turnstileSiteKey`
+ * in site.config.ts. The endpoint is worker/contact.ts; it holds the recipient
+ * as the Worker secret `CONTACT_RECIPIENT`, which never appears in this
+ * repository or in anything served to a browser. No public address is shown
+ * and no `mailto:` is used.
  */
 export default function ContactPage() {
   return (
@@ -37,8 +37,8 @@ export default function ContactPage() {
         <Container>
           <div className="grid gap-16 lg:grid-cols-[1fr_320px] items-start">
             <div className="max-w-prose">
-              {contactChannelOpen && CONTACT.formEndpoint ? (
-                <ContactForm endpoint={CONTACT.formEndpoint} />
+              {contactChannelOpen && CONTACT.turnstileSiteKey ? (
+                <ContactForm endpoint={CONTACT.formEndpoint} siteKey={CONTACT.turnstileSiteKey} />
               ) : (
                 <div className="border-t rule pt-8">
                   <Label className="mb-6" as="h2">No channel open yet</Label>
