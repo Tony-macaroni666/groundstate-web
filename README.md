@@ -2,7 +2,7 @@
 
 The Ground State website: Next.js 15 (App Router) as a static export,
 TypeScript strict, Tailwind, served by Cloudflare Workers Static Assets. No CMS,
-no database, no server.
+no database. The only server code is the contact route (`worker/`).
 
 **This repository renders no research.** Research articles arrive as signed,
 human-approved publication bundles (`publications/`), produced by the Ground
@@ -45,7 +45,8 @@ scripts/
 .github/
   workflows/                  publication-gate.yml, build.yml — the required checks
   CODEOWNERS                  everything owner-reviewed except new bundles
-  publication-signers         the one pinned publisher key (empty until the backend has one)
+  publication-signers         the one pinned publisher key
+worker/                       the only server code: POST /api/contact (Turnstile → one email)
 app/  components/  content/   the site; listing, home and sitemap read lib/publications only
 brand-assets.lock.json        canonical brand files, pinned to the brand registry hashes
 site.config.ts                origin, contact routing, nav, OG image
@@ -69,13 +70,14 @@ site.config.ts                origin, contact routing, nav, OG image
 | Variable | What it does |
 |---|---|
 | `NEXT_PUBLIC_SITE_URL` | Production origin. Set only by `scripts/build-cf.mjs` on `main` once the domain is attached (`PRODUCTION_ORIGIN`). Unset: no canonical tags, empty sitemap, `robots.txt` disallows everything, every page `noindex`. |
-| `NEXT_PUBLIC_CONTACT_ENDPOINT` | The contact form's backend. Unset: no form is rendered and the page says no channel is open. |
 
 ## Contact
 
-Form only — no published address, no `mailto:`. The recipient is a server-side
-value of the form backend and never appears here. Until an endpoint exists the
-page states that no channel is open.
+Form only — no published address, no `mailto:`. The form posts to
+`/api/contact` (`worker/contact.ts`, the only server code), which checks a
+Cloudflare Turnstile token and sends one email through Email Routing. The
+recipient is a Worker secret and never appears here. Until the channel is set up
+(`docs/SETUP.md` §7) the page shows no form and says no channel is open.
 
 ## Journal
 

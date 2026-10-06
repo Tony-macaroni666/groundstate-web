@@ -128,3 +128,26 @@ so the served article bytes stay the signed bytes:
 
 The publisher's live hash check catches a rewrite either way; these settings keep
 it from happening.
+
+## 7. The contact channel
+
+The form posts to `/api/contact` (`worker/contact.ts`): a Turnstile check, then
+one plain-text email to the owner through Email Routing. Nothing is stored. The
+page shows no form until every step below is done — `CONTACT.turnstileSiteKey`
+in `site.config.ts` stays `null` until then.
+
+1. **Email Routing** — zone `groundstatemethod.com` → **Email → Email Routing →
+   Enable**, and accept the DNS records it adds. Under **Destination addresses**
+   add the owner's mailbox and confirm the link Cloudflare sends there. Do this
+   before deploying a `wrangler.jsonc` with the `send_email` binding.
+2. **Turnstile** — account → **Turnstile → Add widget**: hostname
+   `groundstatemethod.com`, mode **Managed**. The **site key** is public and goes
+   into `site.config.ts`. The **secret key** never leaves the dashboard.
+3. **Worker secrets** — `ground-state` → **Settings → Variables and secrets →
+   Add**, type **Secret**: `CONTACT_RECIPIENT` (the verified mailbox) and
+   `TURNSTILE_SECRET`. Never in this repository, never in chat.
+4. **Privacy notice** published, linked from the form.
+5. Only then: a reviewed PR that sets `CONTACT.turnstileSiteKey`.
+
+Until 1–3 are done the endpoint answers `503` and sends nothing.
+
