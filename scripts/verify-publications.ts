@@ -10,6 +10,9 @@
 // judges it nor bring its own trusted key. The Cloudflare build runs it again
 // on main, so an invalid bundle can neither merge nor deploy.
 
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { PUBLICATIONS_DIR } from "../lib/publications/contract";
 import { loadSigners, verifyPublications } from "../lib/publications/verify";
 
 const at = process.argv.indexOf("--tree");
@@ -19,8 +22,15 @@ if (at >= 0 && !tree) {
   process.exit(2);
 }
 
-// The trusted key always comes from the checkout this script runs from.
-const report = verifyPublications({ root: tree ?? process.cwd(), signers: loadSigners(process.cwd()) });
+// The trusted keys always come from the checkout this script runs from. With
+// --tree, a bundle that checkout does not have is one the pull request adds, and
+// must be signed by a key that is valid now.
+const base = process.cwd();
+const report = verifyPublications({
+  root: tree ?? base,
+  signers: loadSigners(base),
+  isNew: tree ? (id) => !existsSync(join(base, PUBLICATIONS_DIR, id)) : undefined,
+});
 if (report.errors.length) {
   console.error(`✗ Publication gate: ${report.errors.length} problem(s)\n- ${report.errors.join("\n- ")}`);
   process.exit(1);

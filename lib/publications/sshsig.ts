@@ -18,6 +18,34 @@ export interface AllowedSigner {
   principal: string;
   namespaces: string[] | null;
   keyBlob: Buffer;
+  /** valid-after="…": the key signs nothing authorized before this instant. */
+  validAfter: Date | null;
+  /** valid-before="…": the key signs nothing authorized at or after this instant (a retired key). */
+  validBefore: Date | null;
+}
+
+/**
+ * An allowed_signers time, always read as UTC: YYYYMMDD, YYYYMMDDHHMM or
+ * YYYYMMDDHHMMSS, optionally with a trailing Z. Write it with the Z, so
+ * ssh-keygen reads it the same way. Anything else is not a time.
+ */
+export function parseSignerTime(value: string): Date | null {
+  const m = /^(\d{4})(\d{2})(\d{2})(?:(\d{2})(\d{2})(\d{2})?)?Z?$/.exec(value);
+  if (!m) return null;
+  const [y, mo, d, h = "0", mi = "0", s = "0"] = m.slice(1).map((v) => v ?? "0");
+  const t = new Date(Date.UTC(+y, +mo - 1, +d, +h, +mi, +s));
+  // Reject 20261332 and the like instead of letting Date roll them over.
+  const fields = [t.getUTCFullYear(), t.getUTCMonth() + 1, t.getUTCDate(), t.getUTCHours(), t.getUTCMinutes(), t.getUTCSeconds()];
+  if (fields.some((f, i) => f !== [+y, +mo, +d, +h, +mi, +s][i])) return null;
+  return t;
+}
+
+/** Whether `at` falls inside the signer's validity window. */
+export function signerValidAt(s: AllowedSigner, at: Date): boolean {
+  if (Number.isNaN(at.getTime())) return false;
+  if (s.validAfter && at < s.validAfter) return false;
+  if (s.validBefore && at >= s.validBefore) return false;
+  return true;
 }
 
 class Reader {
@@ -47,7 +75,15 @@ const sshString = (b: Buffer | string) => {
   return Buffer.concat([len, body]);
 };
 
-/** Parses an allowed_signers file (ssh-keygen(1) ALLOWED SIGNERS). Unsupported key types are ignored. */
+/**
+ * Parses an allowed_signers file (ssh-keygen(1) ALLOWED SIGNERS).
+ *
+ * Honoured options: namespaces, valid-after, valid-before. A line with any other
+ * option (cert-authority, an unknown one, a malformed time) is dropped whole:
+ * a restriction this parser does not understand must not be silently ignored,
+ * so the key it was meant to restrict is not trusted at all. Unsupported key
+ * types are dropped too.
+ */
 export function parseAllowedSigners(text: string): AllowedSigner[] {
   const out: AllowedSigner[] = [];
   for (const raw of text.split("\n")) {
@@ -57,18 +93,25 @@ export function parseAllowedSigners(text: string): AllowedSigner[] {
     const principal = tokens.shift();
     if (!principal) continue;
     let namespaces: string[] | null = null;
-    // Options precede the key type; the only one honoured here is namespaces="…".
+    let validAfter: Date | null = null;
+    let validBefore: Date | null = null;
+    let understood = true;
+    // Options precede the key type.
     const isKeyType = (t: string) => t.startsWith("ssh-") || t.startsWith("ecdsa-") || t.startsWith("sk-");
     while (tokens.length > 0 && !isKeyType(tokens[0]!)) {
       const opt = tokens.shift()!;
-      for (const part of opt.split(",")) {
-        const m = /^namespaces="([^"]*)"$/.exec(part);
-        if (m) namespaces = m[1].split(",").map((s) => s.trim());
+      // Split on commas outside quotes: namespaces="a,b" is one option.
+      for (const part of opt.match(/(?:[^,"]+|"[^"]*")+/g) ?? []) {
+        const m = /^([a-z-]+)="([^"]*)"$/.exec(part);
+        if (m?.[1] === "namespaces") namespaces = m[2].split(",").map((s) => s.trim());
+        else if (m?.[1] === "valid-after" && parseSignerTime(m[2])) validAfter = parseSignerTime(m[2]);
+        else if (m?.[1] === "valid-before" && parseSignerTime(m[2])) validBefore = parseSignerTime(m[2]);
+        else understood = false;
       }
     }
     const [keyType, b64] = tokens;
-    if (keyType !== ED25519 || !b64) continue;
-    out.push({ principal, namespaces, keyBlob: Buffer.from(b64, "base64") });
+    if (!understood || keyType !== ED25519 || !b64) continue;
+    out.push({ principal, namespaces, keyBlob: Buffer.from(b64, "base64"), validAfter, validBefore });
   }
   return out;
 }
@@ -79,7 +122,8 @@ function unarmor(armored: string): Buffer {
   return Buffer.from(m[1].replace(/\s+/g, ""), "base64");
 }
 
-export type VerifyResult = { ok: true } | { ok: false; reason: string };
+/** On success, the pinned lines whose key made the signature (their validity windows are the caller's to check). */
+export type VerifyResult = { ok: true; matched: AllowedSigner[] } | { ok: false; reason: string };
 
 /**
  * Verifies `armored` over `message` for `principal` in `namespace`, against
@@ -127,7 +171,9 @@ export function verifySshSignature(opts: {
     const digest = createHash(hashAlg).update(opts.message).digest();
     const signed = Buffer.concat([MAGIC, sshString(namespace), sshString(""), sshString(hashAlg), sshString(digest)]);
     const key = createPublicKey({ key: Buffer.concat([SPKI_ED25519_PREFIX, rawKey]), format: "der", type: "spki" });
-    return verifySignature(null, signed, key, rawSig) ? { ok: true } : { ok: false, reason: "signature does not verify" };
+    return verifySignature(null, signed, key, rawSig)
+      ? { ok: true, matched: trusted }
+      : { ok: false, reason: "signature does not verify" };
   } catch (e) {
     return { ok: false, reason: `unreadable signature: ${e instanceof Error ? e.message : String(e)}` };
   }
