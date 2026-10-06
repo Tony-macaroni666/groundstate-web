@@ -27,7 +27,7 @@ import {
   SIGNERS_FILE,
   type Manifest,
 } from "./contract";
-import { parseAllowedSigners, verifySshSignature, type AllowedSigner } from "./sshsig";
+import { parseAllowedSigners, signerValidAt, verifySshSignature, type AllowedSigner } from "./sshsig";
 
 // strictRequired is off only because if/then branches list properties declared at the top level.
 const ajv = new Ajv2020({ allErrors: true, strict: true, strictRequired: false });
@@ -48,6 +48,15 @@ export interface VerifyOptions {
   signers?: AllowedSigner[];
   /** Tests only: let fixture-marked articles through the marker check. Never set in production. */
   allowFixtureMarker?: boolean;
+  /**
+   * Which bundles a pull request adds. A new bundle must be signed by a key that
+   * is valid now, not only at its own authorized_at — otherwise a retired key
+   * could still sign a backdated bundle. Unset (main, the deploy build): no
+   * bundle is new, and each is checked at its authorized_at only.
+   */
+  isNew?: (id: string) => boolean;
+  /** The present instant for the isNew check (tests). */
+  now?: Date;
 }
 
 export interface VerifyReport {
@@ -140,6 +149,7 @@ function verifyBundle(dir: string, id: string, signers: AllowedSigner[], opts: V
     namespace: SIGNATURE_NAMESPACE,
   });
   if (!sig.ok) return fail(`signature: ${sig.reason}`);
+  const signedBy = sig.matched;
 
   let manifest: Manifest;
   try {
@@ -149,6 +159,15 @@ function verifyBundle(dir: string, id: string, signers: AllowedSigner[], opts: V
   }
   if (!validateSchema(manifest)) {
     return fail(`schema: ${ajv.errorsText(validateSchema.errors, { separator: "; " })}`);
+  }
+  // The key's validity window: it must cover the moment the human authorized this
+  // bundle, and for a bundle this PR adds, the present too (docs: key rotation).
+  const authorizedAt = new Date(manifest.bindings.authorized_at);
+  if (!signedBy.some((s) => signerValidAt(s, authorizedAt))) {
+    return fail("signature: the signing key was not valid at authorized_at");
+  }
+  if (opts.isNew?.(id) && !signedBy.some((s) => signerValidAt(s, authorizedAt) && signerValidAt(s, opts.now ?? new Date()))) {
+    return fail("signature: a new bundle must be signed by a key that is valid now");
   }
   if (manifest.publication_id !== id) errors.push(`${where}: directory name and publication_id differ (${manifest.publication_id})`);
   if (manifest.route !== `/research/${manifest.slug}`) errors.push(`${where}: route must be /research/<slug>`);

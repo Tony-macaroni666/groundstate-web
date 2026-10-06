@@ -35,6 +35,20 @@ stolen publisher key plus the App credential could change website code. Turn on
 Cloudflare branch builds, and the App credential alone could. Keep all four as
 they are.
 
+## Rotating or revoking the publisher key
+
+- **Rotation** (planned): one PR to `.github/publication-signers` adds
+  `valid-before="YYYYMMDDZ"` to the old line and the new key with
+  `valid-after="YYYYMMDDZ"`, same instant. Bundles already on `main` keep
+  verifying at their own `authorized_at`. A bundle a PR adds must be signed by a
+  key valid now, so the retired key cannot sign a backdated bundle.
+- **Compromise**: delete the old line. Everything it signed stops verifying and
+  the site will not deploy until each affected bundle is re-signed with the new
+  key. That re-sign PR modifies existing bundles, which the gate refuses by
+  design; it is merged by the owner's bypass, as a deliberate, recorded act.
+- The parser drops any pinned line with an option it does not understand, rather
+  than ignoring the option.
+
 ## Human overrides
 
 The site owner can bypass the `main` ruleset for pull requests (mode "for pull

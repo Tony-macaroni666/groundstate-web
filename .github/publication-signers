@@ -1,7 +1,14 @@
 # Pinned publisher key for Ground State web publications.
 #
-# Format: OpenSSH allowed_signers, see ssh-keygen(1). Exactly one line:
+# Format: OpenSSH allowed_signers, see ssh-keygen(1). One current line:
 #   ground-state-web-publisher namespaces="ground-state.web-publication.v1" ssh-ed25519 AAAA… <comment>
+#
+# Rotation (SECURITY.md): add valid-before="YYYYMMDDZ" to the old line, add the
+# new key with valid-after="YYYYMMDDZ" (same instant, UTC, with the Z). Published
+# bundles keep verifying at their own authorized_at; a new bundle must be signed
+# by a key valid now. Compromise: delete the line instead. Only namespaces,
+# valid-after and valid-before are understood; a line with any other option is
+# ignored, so its key is not trusted.
 #
 # Generated on the Mac Mini by the backend (Hermés).
 # Fingerprint: SHA256:I3qX836KExHHNTjBxaeogmjNLByIcNmJg2QggSmAZ8A (ED25519)

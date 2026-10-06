@@ -80,6 +80,10 @@ ssh-keygen -Y sign -f <publisher-key> -n ground-state.web-publication.v1 manifes
   [`.github/publication-signers`](../.github/publication-signers):
   `ground-state-web-publisher namespaces="ground-state.web-publication.v1" ssh-ed25519 AAAA…`
 - The private key exists only on the Mac Mini.
+- Key rotation: a pinned line may carry `valid-after` / `valid-before` (UTC,
+  `YYYYMMDDZ`). The signing key must be valid at the bundle's
+  `bindings.authorized_at`, and for a bundle a pull request adds, valid at the
+  time of the check as well. Sign new bundles only with the current key.
 - Check locally before pushing:
   `ssh-keygen -Y verify -f .github/publication-signers -I ground-state-web-publisher -n ground-state.web-publication.v1 -s manifest.json.sig < manifest.json`
 

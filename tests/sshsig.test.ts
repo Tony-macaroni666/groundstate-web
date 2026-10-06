@@ -17,8 +17,8 @@ describe("SSH signature verification", () => {
     verifySshSignature({ message, armored: sshSign(key, message, NS), signers, principal: WHO, namespace: NS, ...over });
 
   it("accepts the pinned key, principal and namespace (sha512 and sha256)", () => {
-    expect(check()).toEqual({ ok: true });
-    expect(check({ armored: sshSign(key, message, NS, "sha256") })).toEqual({ ok: true });
+    expect(check()).toMatchObject({ ok: true });
+    expect(check({ armored: sshSign(key, message, NS, "sha256") })).toMatchObject({ ok: true });
   });
 
   it("refuses a changed message", () => {
@@ -73,7 +73,7 @@ describe.skipIf(!hasSshKeygen)("interoperability with ssh-keygen", () => {
     const pub = readFileSync(`${keyPath}.pub`, "utf8").trim().split(" ").slice(0, 2).join(" ");
     const signers = parseAllowedSigners(`${WHO} namespaces="${NS}" ${pub}`);
     const armored = readFileSync(`${msgPath}.sig`, "utf8");
-    expect(verifySshSignature({ message, armored, signers, principal: WHO, namespace: NS })).toEqual({ ok: true });
+    expect(verifySshSignature({ message, armored, signers, principal: WHO, namespace: NS })).toMatchObject({ ok: true });
   });
 
   it("produces signatures ssh-keygen -Y verify accepts", () => {
