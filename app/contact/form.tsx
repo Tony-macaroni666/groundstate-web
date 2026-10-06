@@ -60,6 +60,9 @@ const field =
 export function ContactForm({ endpoint, siteKey }: { endpoint: string; siteKey: string }) {
   const [errors, setErrors] = useState<Errors>({});
   const [state, setState] = useState<"idle" | "sending" | "sent" | "failed" | "unchecked">("idle");
+  // The endpoint's one-word reason ("challenge", "closed", "send"…), shown with a
+  // failure so a report can say what went wrong. Never message content.
+  const [reason, setReason] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const widget = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
@@ -121,8 +124,11 @@ export function ContactForm({ endpoint, siteKey }: { endpoint: string; siteKey: 
         setState("sent");
         return;
       }
+      const body = (await res.json().catch(() => null)) as { error?: unknown } | null;
+      setReason(typeof body?.error === "string" && /^[a-z-]{1,32}$/.test(body.error) ? body.error : String(res.status));
       setState("failed");
     } catch {
+      setReason("network");
       setState("failed");
     }
     resetCheck();
@@ -205,7 +211,7 @@ export function ContactForm({ endpoint, siteKey }: { endpoint: string; siteKey: 
         <Button type="submit">{state === "sending" ? "Sending…" : "Send"}</Button>
         {state === "failed" && (
           <p role="alert" className="text-small text-forest dark:text-sage">
-            That did not send. Your message is still here — try again.
+            That did not send{reason ? ` (${reason})` : ""}. Your message is still here — try again.
           </p>
         )}
         {state === "unchecked" && (

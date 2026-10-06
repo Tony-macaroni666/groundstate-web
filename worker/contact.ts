@@ -43,6 +43,7 @@ export interface TurnstileResult {
   success: boolean;
   hostname?: string;
   action?: string;
+  "error-codes"?: string[];
 }
 
 export interface ContactDeps {
@@ -77,7 +78,12 @@ function json(status: number, body: Record<string, unknown>): Response {
   });
 }
 
-const fail = (status: number, error: string) => json(status, { ok: false, error });
+// One log line per refusal: the status and the one-word reason, never the
+// message, the name, the address or the token.
+const fail = (status: number, error: string) => {
+  console.log(JSON.stringify({ route: "contact", status, error }));
+  return json(status, { ok: false, error });
+};
 
 /** Field checks, shared in spirit with the form's own. Returns the clean message or the first problem. */
 export function parseMessage(input: unknown): ContactMessage | { error: string } {
@@ -180,6 +186,10 @@ export async function handleContact(request: Request, env: ContactEnv, deps: Con
     return fail(502, "challenge-unavailable");
   }
   if (!check.success || check.hostname !== SITE_HOSTNAME || check.action !== TURNSTILE_ACTION) {
+    console.log(JSON.stringify({
+      route: "contact",
+      turnstile: { success: check.success, hostname: check.hostname ?? null, action: check.action ?? null, codes: check["error-codes"] ?? [] },
+    }));
     return fail(403, "challenge");
   }
 
@@ -187,8 +197,11 @@ export async function handleContact(request: Request, env: ContactEnv, deps: Con
   const id = deps.id?.() ?? crypto.randomUUID();
   try {
     await env.CONTACT_EMAIL.send(deps.message(SENDER, env.CONTACT_RECIPIENT, buildMime(parsed, env.CONTACT_RECIPIENT, at, id)));
-  } catch {
+  } catch (e) {
+    // The binding's own message (e.g. an unverified destination); it names no sender content.
+    console.log(JSON.stringify({ route: "contact", send_error: e instanceof Error ? e.message.slice(0, 300) : "unknown" }));
     return fail(502, "send");
   }
+  console.log(JSON.stringify({ route: "contact", status: 200 }));
   return json(200, { ok: true });
 }

@@ -39,6 +39,9 @@
   // The site has one address, https://groundstatemethod.com (the custom domain
   // attached in the dashboard). No second copy on *.workers.dev.
   "workers_dev": false,
+  // Workers Logs: the contact route logs one line per request — status and a
+  // one-word reason, never message content. Pages and articles never run here.
+  "observability": { "enabled": true },
   // The contact channel's mail. It can only send from the one address below, and
   // only to an address verified in Email Routing; which one is the secret
   // CONTACT_RECIPIENT, set in the dashboard with TURNSTILE_SECRET (docs/SETUP.md).
