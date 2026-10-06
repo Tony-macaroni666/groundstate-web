@@ -29,5 +29,8 @@
   },
   // No per-version preview URLs: an old version would otherwise stay reachable
   // at an address of its own, including one serving an article since withdrawn.
-  "preview_urls": false
+  "preview_urls": false,
+  // The site has one address, https://groundstatemethod.com (the custom domain
+  // attached in the dashboard). No second copy on *.workers.dev.
+  "workers_dev": false
 }

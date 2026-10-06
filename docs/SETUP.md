@@ -101,13 +101,18 @@ B. Cloudflare (only now):
    | Build command | `npm run build:cf` |
    | Deploy command | `npx wrangler deploy` |
    | Root directory | `/` (repository root) |
-3. **Settings → Build → Branch control: non-production branch builds OFF.** Only
-   `main` is ever built. A branch build runs that branch's own code with the
+3. **Settings → Builds → tab Previews Base → Builds for Preview branches: OFF.**
+   (Do not touch Branch control on the Production tab: that is the production
+   branch, `main`.) Only `main` is ever built. A branch build runs that branch's own code with the
    Cloudflare deploy token, and anyone who can push a branch (the publisher App
    can) could then deploy over the live site without passing `main`'s protection.
-4. When the domain is attached (**Settings → Domains & Routes → Add → Custom domain
-   → `groundstatemethod.com`**), set `PRODUCTION_ORIGIN` in `scripts/build-cf.mjs` to
-   `https://groundstatemethod.com` in the same step, through a reviewed PR.
+4. Turn off the zone settings in section 6 first. Then attach the domain:
+   **ground-state → Domains → Add Domain → `groundstatemethod.com`** (subdomain
+   empty, enable for Production). Not the account-level **Domains → Add domain**,
+   which adds a new zone. Once it is Active, set `PRODUCTION_ORIGIN` in
+   `scripts/build-cf.mjs` to `https://groundstatemethod.com` through a reviewed PR
+   (done 6 Oct 2026), and then `workers_dev: false` in `wrangler.jsonc`, so the
+   site has a single address.
 
 ## 6. Zone settings for the domain
 
