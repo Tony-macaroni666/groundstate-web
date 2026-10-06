@@ -146,8 +146,14 @@ in `site.config.ts` stays `null` until then.
 3. **Worker secrets** — `ground-state` → **Settings → Variables and secrets →
    Add**, type **Secret**: `CONTACT_RECIPIENT` (the verified mailbox) and
    `TURNSTILE_SECRET`. Never in this repository, never in chat.
-4. **Privacy notice** published, linked from the form.
+4. **Privacy notice** under the form (`app/contact/page.tsx`): who receives the
+   message, why, what Cloudflare does, how long it is kept, how to have it
+   deleted, and the supervisory authority.
 5. Only then: a reviewed PR that sets `CONTACT.turnstileSiteKey`.
+
+Done 6 Oct 2026. To close the channel again, set `CONTACT.turnstileSiteKey` to
+`null`; to stop mail at once, delete the `CONTACT_RECIPIENT` secret (the route
+then answers `503`).
 
 Until 1–3 are done the endpoint answers `503` and sends nothing.
 

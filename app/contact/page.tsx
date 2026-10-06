@@ -38,7 +38,23 @@ export default function ContactPage() {
           <div className="grid gap-16 lg:grid-cols-[1fr_320px] items-start">
             <div className="max-w-prose">
               {contactChannelOpen && CONTACT.turnstileSiteKey ? (
-                <ContactForm endpoint={CONTACT.formEndpoint} siteKey={CONTACT.turnstileSiteKey} />
+                <>
+                  <ContactForm endpoint={CONTACT.formEndpoint} siteKey={CONTACT.turnstileSiteKey} />
+                  <div className="border-t rule pt-6 mt-16">
+                    <Label className="mb-3" as="h2">What happens to your message</Label>
+                    <p className="text-small muted">
+                      Your name, email address and message go by email to Jakub
+                      Antonín, founder of Ground State (Czech Republic), to be read
+                      and answered — the only reason they are asked for. Nothing
+                      is stored on this site. Cloudflare delivers the email and
+                      runs the spam check, which looks at your connection and
+                      browser. A message is kept while the conversation needs it,
+                      and deleted sooner if you ask. To see or delete what you
+                      sent, write through this form. You can also complain to the
+                      Czech data protection authority (ÚOOÚ).
+                    </p>
+                  </div>
+                </>
               ) : (
                 <div className="border-t rule pt-8">
                   <Label className="mb-6" as="h2">No channel open yet</Label>

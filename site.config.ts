@@ -84,16 +84,17 @@ export const OG_IMAGE: OgImage | null = {
  * The form posts to `/api/contact` on this site (worker/contact.ts), which
  * checks a Cloudflare Turnstile token and sends one email through Email Routing.
  *
- * `turnstileSiteKey` is the public Turnstile site key. It stays null — and the
- * contact page shows NO FORM and says no channel is open — until the channel
- * really works: Email Routing on, the recipient verified, the Worker secrets
- * CONTACT_RECIPIENT and TURNSTILE_SECRET set (docs/SETUP.md §7), and the privacy
- * notice published. A form that accepts a correction and discards it is worse
+ * `turnstileSiteKey` is the public Turnstile site key (widget "Ground State
+ * contact", hostname groundstatemethod.com). Set to null to close the channel:
+ * the contact page then shows NO FORM and says no channel is open. It may only
+ * be non-null while the channel really works: Email Routing on, the recipient
+ * verified, the Worker secrets CONTACT_RECIPIENT and TURNSTILE_SECRET set
+ * (docs/SETUP.md §7), and the notice under the form true. A form that accepts a correction and discards it is worse
  * than no form: the sender believes the correction landed.
  */
 export const CONTACT: { formEndpoint: string; turnstileSiteKey: string | null } = {
   formEndpoint: "/api/contact",
-  turnstileSiteKey: null,
+  turnstileSiteKey: "0x4AAAAAAFPRCuhcncVHgMdP",
 };
 
 export const contactChannelOpen = CONTACT.turnstileSiteKey !== null;
