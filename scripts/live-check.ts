@@ -133,6 +133,9 @@ async function main(): Promise<void> {
   // The deployment and every publication on it.
   const res = await get(`${CANONICAL_ORIGIN}/_publications.json`);
   check(res.status === 200, `/_publications.json answers 200 (got ${res.status})`);
+  // The article CSP rides on _headers too, so prove Cloudflare applies the file.
+  check(res.headers.get("cache-control") === "no-store" && res.headers.get("x-robots-tag") === "noindex",
+    "_headers is applied (/_publications.json is no-store, noindex)");
   const live = res.status === 200 ? await res.json() : null;
   findings.push(...compareDeployment(live, expectedEntries(report)));
   if (live?.commit) console.log(`  deployed commit ${live.commit}, build ${live.build_uuid}`);
@@ -157,6 +160,9 @@ async function main(): Promise<void> {
   const html = await home.text();
   check(home.status === 200, `home answers 200 (got ${home.status})`);
   check(html.includes(`<link rel="canonical" href="${CANONICAL_ORIGIN}"`), "home carries its canonical link");
+  // A build that thinks it is not production marks every page noindex.
+  check(!/noindex/i.test(home.headers.get("x-robots-tag") ?? "") && !/<meta name="robots" content="[^"]*noindex/i.test(html),
+    "home is indexable (no noindex header or meta)");
   check(!/cdn-cgi\/scripts|rocket-loader|data-cfemail|__cf_email__/i.test(html), "no Cloudflare script or email rewriting in the page");
   const robots = await (await get(`${CANONICAL_ORIGIN}/robots.txt`)).text();
   check(/^Allow: \/$/m.test(robots) && robots.includes(`Sitemap: ${CANONICAL_ORIGIN}/sitemap.xml`), "robots.txt allows indexing and names the sitemap");
