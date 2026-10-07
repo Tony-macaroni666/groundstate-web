@@ -1,13 +1,20 @@
 # Live check: what https://groundstatemethod.com serves, against main.
 #
 # Not a required check and not run on pull requests: it reads the live site.
-# Daily, and on demand (Actions → live-check → Run workflow), e.g. a few
-# minutes after a merge has deployed. Read-only token, no secrets; the contact
-# probe sends no Turnstile token, so it is refused before any email is sent.
-# A failed scheduled run notifies the repository owner by email.
+# After every successful Cloudflare deploy of main (the "Workers Builds"
+# check run completing), daily, and on demand (Actions → live-check → Run
+# workflow). Read-only token, no secrets; the contact probe sends no Turnstile
+# token, so it is refused before any email is sent. A failed run notifies by
+# email.
+#
+# check_run only fires from the default branch's copy of this file, and never
+# for check runs GitHub Actions creates, so the live-check's own check run
+# cannot trigger it again.
 name: live-check
 
 on:
+  check_run:
+    types: [completed]
   schedule:
     - cron: "17 6 * * *"
   workflow_dispatch:
@@ -21,9 +28,18 @@ concurrency:
 
 jobs:
   live-check:
+    # Any other check run (a third party's, or a failed or branch deploy) is skipped.
+    if: >-
+      github.event_name != 'check_run' || (
+        github.event.check_run.name == 'Workers Builds: ground-state' &&
+        github.event.check_run.conclusion == 'success' &&
+        github.event.check_run.check_suite.head_branch == 'main')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: Let the new version reach the edge
+        if: github.event_name == 'check_run'
+        run: sleep 45
       - uses: actions/checkout@v6
         with:
           ref: main

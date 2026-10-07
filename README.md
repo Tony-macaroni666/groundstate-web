@@ -41,7 +41,7 @@ scripts/
   verify-publications.ts      required check "publication-gate" (whole tree)
   check-publication-diff.ts   required check "publication-gate" (which paths a PR may change)
   export-publications.ts      copies each article into ./out byte for byte; _publications.json
-  live-check.ts               the live site against main (workflow live-check: daily, on demand)
+  live-check.ts               the live site against main (workflow live-check: after each deploy, daily, on demand)
   check-content.ts  preflight.mjs
 .github/
   workflows/                  publication-gate.yml, build.yml — the required checks; live-check.yml
