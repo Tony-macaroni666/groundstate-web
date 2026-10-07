@@ -1,3 +1,14 @@
+# Every response from the static site. Content-Security-Policy is deliberately
+# not set here: each article carries its own, strict one (scripts/export-
+# publications.ts), and a second policy on the same route would be enforced
+# alongside it and break the live check's exact comparison.
+/*
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()
+
 # Next's build output under /_next/static/ is content-hashed: a changed file
 # gets a new name, so browsers may keep these for a year without asking again.
 # HTML, articles and everything else keep Cloudflare's default (revalidate).
