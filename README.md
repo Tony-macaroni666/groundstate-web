@@ -41,9 +41,10 @@ scripts/
   verify-publications.ts      required check "publication-gate" (whole tree)
   check-publication-diff.ts   required check "publication-gate" (which paths a PR may change)
   export-publications.ts      copies each article into ./out byte for byte; _publications.json
+  live-check.ts               the live site against main (workflow live-check: daily, on demand)
   check-content.ts  preflight.mjs
 .github/
-  workflows/                  publication-gate.yml, build.yml — the required checks
+  workflows/                  publication-gate.yml, build.yml — the required checks; live-check.yml
   CODEOWNERS                  everything owner-reviewed except new bundles
   publication-signers         the one pinned publisher key
 worker/                       the only server code: POST /api/contact (Turnstile → one email)
