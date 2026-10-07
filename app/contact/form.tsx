@@ -66,6 +66,12 @@ export function ContactForm({ endpoint, siteKey }: { endpoint: string; siteKey: 
   const [token, setToken] = useState<string | null>(null);
   const widget = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
+  // A send in flight, or one that already went through. Refs, not state: a
+  // double tap fires the second submit before React re-renders, and it would
+  // otherwise reuse the same single-use token. Cloudflare then refuses the
+  // repeat, and that refusal must not replace the success on screen.
+  const inFlight = useRef(false);
+  const sent = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -97,6 +103,7 @@ export function ContactForm({ endpoint, siteKey }: { endpoint: string; siteKey: 
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (inFlight.current || sent.current) return;
     const data = new FormData(e.currentTarget);
     const name = String(data.get("name") ?? "").trim();
     const email = String(data.get("email") ?? "").trim();
@@ -113,6 +120,7 @@ export function ContactForm({ endpoint, siteKey }: { endpoint: string; siteKey: 
       return;
     }
 
+    inFlight.current = true;
     setState("sending");
     try {
       const res = await fetch(endpoint, {
@@ -121,6 +129,7 @@ export function ContactForm({ endpoint, siteKey }: { endpoint: string; siteKey: 
         body: JSON.stringify({ name, email, message, subject: data.get("subject"), token }),
       });
       if (res.ok) {
+        sent.current = true;
         setState("sent");
         return;
       }
@@ -130,6 +139,8 @@ export function ContactForm({ endpoint, siteKey }: { endpoint: string; siteKey: 
     } catch {
       setReason("network");
       setState("failed");
+    } finally {
+      inFlight.current = false;
     }
     resetCheck();
   }
