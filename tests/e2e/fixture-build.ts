@@ -127,6 +127,10 @@ try {
     "the home page category line breaks only after its comma",
   );
   expect(
+    /<li class="lg:hidden"><a [^>]*href="\/contact"/.test(readFileSync(join(out, "index.html"), "utf8")),
+    "from lg the header shows Contact once, as the button",
+  );
+  expect(
     readFileSync(join(out, "index.html"), "utf8").includes(`<meta property="og:image" content="${CANONICAL_ORIGIN}/og-default.png"/>`),
     "with an origin, the preview image is absolute on that origin",
   );

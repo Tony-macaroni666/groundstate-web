@@ -39,7 +39,8 @@ export function Nav() {
               {nav.map((item) => {
                 const active = isActive(pathname, item.href);
                 return (
-                  <li key={item.href}>
+                  // From lg the Contact button stands in for the Contact link.
+                  <li key={item.href} className={item.href === "/contact" ? "lg:hidden" : undefined}>
                     <Link
                       href={item.href}
                       aria-current={active ? "page" : undefined}
@@ -58,9 +59,10 @@ export function Nav() {
             <ThemeToggle />
             <Link
               href="/contact"
-              // Below lg the primary nav already carries Contact: showing the
-              // CTA as well duplicated the link and overflowed the header by
-              // 36 px at exactly 768 px, where the desktop nav appears.
+              aria-current={isActive(pathname, "/contact") ? "page" : undefined}
+              // One Contact at every width: below lg the primary nav carries it
+              // (the button there overflowed the header by 36 px at 768 px);
+              // from lg the button does, and the nav leaves its link out.
               className="hidden lg:inline-flex text-small font-medium border border-charcoal dark:border-bone px-4 py-2 rounded hover:bg-charcoal hover:text-bone dark:hover:bg-bone dark:hover:text-ink transition-colors"
             >
               Contact
