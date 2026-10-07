@@ -71,7 +71,10 @@ checks; it is the owner's deliberate act and is recorded on the PR.
   layer and never passes through it. Its one route, `POST /api/contact`, accepts
   only same-origin JSON with a valid Turnstile token, sends one email from a
   fixed address, stores nothing, and answers `503` while its secrets are unset.
-  The recipient and the Turnstile secret are Worker secrets in the dashboard.
+  The recipient and the Turnstile secret are Worker secrets. Their source is
+  the dashboard's Builds secrets; the production build copies them over with
+  `wrangler secret bulk` (values on stdin) and runs every other step without
+  them. Only `main` is built, so no branch's code ever sees them.
 - **Edge rewriting is off for article routes** (Email Address Obfuscation, Rocket
   Loader, Automatic HTTPS Rewrites, Web Analytics auto-injection, Zaraz,
   Cloudflare Fonts) so the served bytes stay the signed bytes. The live hash

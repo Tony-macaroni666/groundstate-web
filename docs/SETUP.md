@@ -143,9 +143,14 @@ in `site.config.ts` stays `null` until then.
 2. **Turnstile** — account → **Turnstile → Add widget**: hostname
    `groundstatemethod.com`, mode **Managed**. The **site key** is public and goes
    into `site.config.ts`. The **secret key** never leaves the dashboard.
-3. **Worker secrets** — `ground-state` → **Settings → Variables and secrets →
-   Add**, type **Secret**: `CONTACT_RECIPIENT` (the verified mailbox) and
-   `TURNSTILE_SECRET`. Never in this repository, never in chat.
+3. **Secrets** — `ground-state` → **Settings → Builds → Variables and secrets**,
+   type **Secret**: `CONTACT_RECIPIENT` (the verified mailbox) and
+   `TURNSTILE_SECRET`. Each production build copies them into the Worker's
+   runtime secrets (`scripts/contact-secrets.mjs`); the build log names them and
+   never shows a value. Setting them directly as runtime secrets also works.
+   Never in this repository, never in chat. The Builds panel is the same one
+   that holds the build configuration; the dashboard's runtime "Variables and
+   Secrets" section is hard to find, which is why the build does the copy.
 4. **Privacy notice** under the form (`app/contact/page.tsx`): who receives the
    message, why, what Cloudflare does, how long it is kept, how to have it
    deleted, and the supervisory authority.
