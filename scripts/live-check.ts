@@ -163,6 +163,12 @@ async function main(): Promise<void> {
   // A build that thinks it is not production marks every page noindex.
   check(!/noindex/i.test(home.headers.get("x-robots-tag") ?? "") && !/<meta name="robots" content="[^"]*noindex/i.test(html),
     "home is indexable (no noindex header or meta)");
+  // The site-wide security headers (public/_headers, rule "/*").
+  const hsts = /max-age=(\d+)/.exec(home.headers.get("strict-transport-security") ?? "");
+  check(!!hsts && Number(hsts[1]) >= 31536000, "home sends HSTS for at least a year");
+  check(home.headers.get("x-content-type-options") === "nosniff" && home.headers.get("x-frame-options") === "DENY"
+    && home.headers.get("referrer-policy") === "strict-origin-when-cross-origin" && !!home.headers.get("permissions-policy"),
+    "home sends nosniff, frame denial, the referrer policy and the permissions policy");
   check(!/cdn-cgi\/scripts|rocket-loader|data-cfemail|__cf_email__/i.test(html), "no Cloudflare script or email rewriting in the page");
   const robots = await (await get(`${CANONICAL_ORIGIN}/robots.txt`)).text();
   check(/^Allow: \/$/m.test(robots) && robots.includes(`Sitemap: ${CANONICAL_ORIGIN}/sitemap.xml`), "robots.txt allows indexing and names the sitemap");

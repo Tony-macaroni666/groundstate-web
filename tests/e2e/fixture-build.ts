@@ -128,6 +128,9 @@ try {
   const deployment = JSON.parse(readFileSync(join(out, "_publications.json"), "utf8"));
   expect(deployment.publications?.[0]?.article_sha256 === sha256Hex(article), "_publications.json carries the article hash");
   expect(readFileSync(join(out, "_headers"), "utf8").includes(`${ROUTE}\n  Content-Security-Policy:`), "the article route has its security headers");
+  const headers = readFileSync(join(out, "_headers"), "utf8");
+  expect(headers.split("\n").filter((l) => l === "/*").length === 1 && headers.includes("Strict-Transport-Security:"), "one rule for every path, with the site's security headers");
+  expect(!headers.includes("X-Robots-Tag: noindex, nofollow"), "the production build is not noindex");
 
   const tampered = Buffer.from(addBundle(bad));
   tampered[tampered.length - 3] ^= 1;
@@ -141,6 +144,11 @@ try {
   expect(pages.length > 0 && pages.every((p) => !p.includes("localhost")), "no unlisted page mentions localhost");
   expect(pages.every((p) => !p.includes('rel="canonical"')), "no unlisted page carries a canonical");
   expect(readFileSync(join(unlisted, "out/index.html"), "utf8").includes('<meta name="robots" content="noindex, nofollow"/>'), "the unlisted home page is noindex");
+  // Cloudflare keeps one rule per path: a second "/*" block would drop the first one's headers.
+  const unlistedHeaders = readFileSync(join(unlisted, "out/_headers"), "utf8");
+  const everyPath = unlistedHeaders.split("\n/*\n");
+  expect(everyPath.length === 2 && /X-Robots-Tag: noindex, nofollow/.test(everyPath[1].split("\n\n")[0]) && /Strict-Transport-Security:/.test(everyPath[1].split("\n\n")[0]),
+    "the unlisted build adds noindex to the one rule for every path, keeping its security headers");
 } finally {
   rmSync(good, { recursive: true, force: true });
   rmSync(bad, { recursive: true, force: true });
