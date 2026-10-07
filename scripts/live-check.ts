@@ -7,6 +7,7 @@
 // the www redirect or HTTPS redirect gone, and the contact route closed while
 // the form is open.
 
+import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { CANONICAL_ORIGIN } from "../lib/publications/contract";
 import { verifyPublications, type VerifyReport } from "../lib/publications/verify";
@@ -62,9 +63,66 @@ export function compareDeployment(live: unknown, expected: LiveEntry[]): Finding
   return out;
 }
 
+/** Minutes a merge may take to reach the site before a stale deploy is an error. */
+export const DEPLOY_GRACE_MINUTES = 20;
+
+/**
+ * The site serves main's latest commit. Cloudflare deploys every push to main
+ * within a few minutes; an older commit after that means deploys have stopped,
+ * which the publication comparison alone misses until a publication changes.
+ */
+export function deployFresh(deployed: unknown, head: string, headAgeMinutes: number): Finding {
+  if (deployed === head) return { ok: true, what: "serves main's latest commit" };
+  const ok = headAgeMinutes < DEPLOY_GRACE_MINUTES;
+  return {
+    ok,
+    what: ok
+      ? `main moved ${Math.round(headAgeMinutes)} min ago; its deploy may still be running (serving ${String(deployed)})`
+      : `serves ${String(deployed)}, not main's ${head} from ${Math.round(headAgeMinutes)} min ago: deploys have stopped`,
+  };
+}
+
+export interface Hop {
+  url: string;
+  status: number;
+}
+
+/**
+ * A redirect chain is right when every hop but the last is permanent (301 or
+ * 308), the last answers 200 at `target`, and it takes at most `max` redirects.
+ * http://www takes two: Cloudflare's Always Use HTTPS upgrades it on the same
+ * host first, then the www rule moves it to the apex. That is the order HSTS
+ * needs (each host upgraded on itself), so the check accepts it.
+ */
+export function chainEndsAt(hops: Hop[], target: string, max: number): boolean {
+  const last = hops.at(-1);
+  return (
+    last !== undefined &&
+    last.status === 200 &&
+    last.url === target &&
+    hops.length - 1 <= max &&
+    hops.slice(0, -1).every((h) => h.status === 301 || h.status === 308)
+  );
+}
+
+const trace = (hops: Hop[]) => hops.map((h) => `${h.status} ${h.url}`).join(" → ");
+
 const sha256 = (b: ArrayBuffer) => createHash("sha256").update(Buffer.from(b)).digest("hex");
 const get = (url: string, init: RequestInit = {}) =>
   fetch(url, { redirect: "manual", ...init, headers: { "User-Agent": "groundstate-live-check", ...(init.headers ?? {}) } });
+
+/** Follows redirects by hand, recording every hop; stops after `limit`. */
+export async function follow(url: string, limit = 5): Promise<Hop[]> {
+  const hops: Hop[] = [];
+  for (let next: string | null = url; next && hops.length <= limit; ) {
+    const r = await get(next);
+    await r.arrayBuffer();
+    hops.push({ url: next, status: r.status });
+    const location = r.headers.get("location");
+    next = r.status >= 300 && r.status < 400 && location ? new URL(location, next).href : null;
+  }
+  return hops;
+}
 
 async function main(): Promise<void> {
   const findings: Finding[] = [];
@@ -78,6 +136,9 @@ async function main(): Promise<void> {
   const live = res.status === 200 ? await res.json() : null;
   findings.push(...compareDeployment(live, expectedEntries(report)));
   if (live?.commit) console.log(`  deployed commit ${live.commit}, build ${live.build_uuid}`);
+  const git = (args: string[]) => execFileSync("git", args, { encoding: "utf8" }).trim();
+  const head = git(["rev-parse", "HEAD"]);
+  findings.push(deployFresh(live?.commit, head, (Date.now() / 1000 - Number(git(["log", "-1", "--format=%ct"]))) / 60));
 
   for (const e of expectedEntries(report)) {
     const r = await get(`${CANONICAL_ORIGIN}${e.route}`);
@@ -100,13 +161,14 @@ async function main(): Promise<void> {
   const robots = await (await get(`${CANONICAL_ORIGIN}/robots.txt`)).text();
   check(/^Allow: \/$/m.test(robots) && robots.includes(`Sitemap: ${CANONICAL_ORIGIN}/sitemap.xml`), "robots.txt allows indexing and names the sitemap");
 
-  // Redirects.
-  const www = await get("http://www.groundstatemethod.com/research");
-  check([301, 308].includes(www.status) && /^https:\/\/groundstatemethod\.com\/research\/?$/.test(www.headers.get("location") ?? ""),
-    `www redirects to the apex (got ${www.status} → ${www.headers.get("location")})`);
-  const http = await get("http://groundstatemethod.com/");
-  check([301, 308].includes(http.status) && (http.headers.get("location") ?? "").startsWith("https://groundstatemethod.com"),
-    `http redirects to https (got ${http.status})`);
+  // Redirects. The www rule itself is one hop; from http it is two.
+  const research = `${CANONICAL_ORIGIN}/research`;
+  const www = await follow("https://www.groundstatemethod.com/research");
+  check(chainEndsAt(www, research, 1), `https://www redirects to the apex in one hop (${trace(www)})`);
+  const wwwHttp = await follow("http://www.groundstatemethod.com/research");
+  check(chainEndsAt(wwwHttp, research, 2), `http://www reaches the apex over https (${trace(wwwHttp)})`);
+  const http = await follow("http://groundstatemethod.com/research");
+  check(chainEndsAt(http, research, 1), `http redirects to https in one hop (${trace(http)})`);
 
   // The contact route: alive, and configured if the form is open. A POST with
   // no Turnstile token is refused before anything is sent.
