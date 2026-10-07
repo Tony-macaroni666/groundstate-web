@@ -17,6 +17,7 @@
  */
 import { spawnSync } from "node:child_process";
 import { appendFileSync } from "node:fs";
+import { contactSecretsPlan, withoutContactSecrets } from "./contact-secrets.mjs";
 
 const PRODUCTION_BRANCH = "main";
 
@@ -31,7 +32,9 @@ const PRODUCTION_ORIGIN = "https://groundstatemethod.com";
 const branch = process.env.WORKERS_CI_BRANCH ?? "";
 const production = branch === PRODUCTION_BRANCH;
 
-const env = { ...process.env, NEXT_TELEMETRY_DISABLED: "1" };
+// The contact secrets are read once, here, and kept out of every build step.
+const contactSecrets = contactSecretsPlan(process.env, production);
+const env = { ...withoutContactSecrets(process.env), NEXT_TELEMETRY_DISABLED: "1" };
 if (production && PRODUCTION_ORIGIN) env.NEXT_PUBLIC_SITE_URL = PRODUCTION_ORIGIN;
 if (!production) delete env.NEXT_PUBLIC_SITE_URL;
 
@@ -51,3 +54,20 @@ if (production && env.NEXT_PUBLIC_SITE_URL) {
 run("npx", ["next", "build"]);
 run("npx", ["tsx", "scripts/export-publications.ts"]);
 if (!production) appendFileSync("out/_headers", "/*\n  X-Robots-Tag: noindex, nofollow\n");
+
+// Last, once the site has built: copy the contact secrets into the Worker's
+// runtime secrets (scripts/contact-secrets.mjs). Values go on stdin; a failure
+// leaves the contact route closed (503) and does not stop the deploy.
+if (contactSecrets.action === "upload") {
+  const r = spawnSync("npx", ["wrangler", "secret", "bulk"], {
+    input: JSON.stringify(contactSecrets.values),
+    stdio: ["pipe", "inherit", "inherit"],
+    env,
+  });
+  if (r.status === 0) console.log("✓ Contact secrets copied to the Worker's runtime secrets.");
+  else console.warn("! Copying the contact secrets failed; the contact route stays as it was.");
+} else if (contactSecrets.action === "no-token") {
+  console.warn("! Contact secrets are in the build environment but there is no API token to copy them.");
+} else if (production) {
+  console.log(`· Contact secrets not copied (${contactSecrets.reason}).`);
+}
