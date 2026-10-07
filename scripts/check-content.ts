@@ -20,22 +20,24 @@ const PLACEHOLDERS: [RegExp, string][] = [
   [/placeholder:\s*true/, "placeholder reference"],
   [/lorem ipsum/i, "filler text"],
 ];
-const LABELS: [RegExp, string][] = [[/science-based|evidence-based|backed by science/i, "banned category label (brand manual §04)"]];
+// Any separator or none: "evidence based", a non-breaking or Unicode hyphen, a dash.
+const LABELS: [RegExp, string][] = [
+  [/(?:science|evidence)[\s\u00a0\u00ad\u2010-\u2015-]*based|backed[\s\u00a0]+by[\s\u00a0]+science/i, "banned category label (brand manual §04)"],
+];
 const INTERNAL_IDS: [RegExp, string][] = [[/GSER-\d|GS-?TER-\d|GSFB-|GSCG-|GSAF-/i, "internal identifier in public presentation"]];
 
-function scan(dir: string, rules: [RegExp, string][]): void {
-  for (const name of readdirSync(dir)) {
-    const path = join(dir, name);
-    if (statSync(path).isDirectory()) scan(path, rules);
-    else if (/\.(tsx?|json|css)$/.test(name)) {
-      const text = readFileSync(path, "utf8");
-      for (const [pattern, what] of rules) if (pattern.test(text)) problems.push(`${relative(ROOT, path)}: ${what} (${pattern})`);
-    }
+function scan(path: string, rules: [RegExp, string][]): void {
+  if (statSync(path).isDirectory()) {
+    for (const name of readdirSync(path)) scan(join(path, name), rules);
+  } else if (/\.(tsx?|json|css)$/.test(path)) {
+    const text = readFileSync(path, "utf8");
+    for (const [pattern, what] of rules) if (pattern.test(text)) problems.push(`${relative(ROOT, path)}: ${what} (${pattern})`);
   }
 }
 
-for (const dir of ["app", "components"]) scan(join(ROOT, dir), [...PLACEHOLDERS, ...LABELS, ...INTERNAL_IDS]);
-scan(join(ROOT, "content"), LABELS);
+// site.config.ts and lib/metadata.ts carry the meta descriptions and OG text.
+for (const path of ["app", "components", "site.config.ts", "lib/metadata.ts"]) scan(join(ROOT, path), [...PLACEHOLDERS, ...LABELS, ...INTERNAL_IDS]);
+scan(join(ROOT, "content"), [...LABELS, ...INTERNAL_IDS]);
 
 if (problems.length) {
   console.error(`✗ ${problems.length} content problem(s):\n- ${problems.join("\n- ")}`);
