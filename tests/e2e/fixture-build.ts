@@ -121,6 +121,12 @@ try {
   expect(readFileSync(join(out, "research.html"), "utf8").includes(TITLE), "the research listing shows the manifest title");
   expect(readFileSync(join(out, "index.html"), "utf8").includes(TITLE), "the home page lists it");
   expect(
+    readFileSync(join(out, "index.html"), "utf8").includes(
+      '<span class="whitespace-nowrap">Human performance,</span> <span class="whitespace-nowrap">traced to the evidence</span>',
+    ),
+    "the home page category line breaks only after its comma",
+  );
+  expect(
     readFileSync(join(out, "index.html"), "utf8").includes(`<meta property="og:image" content="${CANONICAL_ORIGIN}/og-default.png"/>`),
     "with an origin, the preview image is absolute on that origin",
   );
