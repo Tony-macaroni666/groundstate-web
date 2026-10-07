@@ -8,7 +8,7 @@ import { SectionBlock } from "@/components/primitives";
 export const metadata: Metadata = pageMetadata({
   title: "Standard",
   description:
-    "What a claim has to survive before Ground State publishes it: traced to a primary source, read in full, weighed against what disagrees, classified, and translated into practice.",
+    "What a claim has to survive before Ground State publishes it: traced to the evidence it rests on, bounded by the access verified, weighed against what disagrees, classified, and translated no further than the evidence reaches.",
   path: "/standard",
 });
 

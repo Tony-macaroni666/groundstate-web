@@ -66,8 +66,8 @@ export interface OgImage {
  */
 export const OG_IMAGE: OgImage | null = {
   path: "/og-default.png",
-  width: 2112,
-  height: 1108,
+  width: 2400,
+  height: 1260,
   alt: "Ground State — Understand the system. Improve the outcome.",
 };
 

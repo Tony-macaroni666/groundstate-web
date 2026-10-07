@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { NAV as nav } from "@/site.config";
+import { Fragment, useEffect, useState } from "react";
+import { NAV as nav, SITE_TAGLINE } from "@/site.config";
 
 /** True for the section's own page and anything beneath it, false for "/". */
 function isActive(pathname: string, href: string) {
@@ -125,9 +125,25 @@ export function Footer() {
     <footer className="border-t rule mt-24">
       <div className="mx-auto max-w-content px-4 md:px-6 lg:px-8 py-16">
         <div className="grid gap-12 md:grid-cols-[1fr_auto]">
-          <div>
-            <Lockup file="lockup-tagline-light" className="w-[300px] max-w-full h-auto dark:hidden" />
-            <Lockup file="lockup-tagline-dark" className="w-[300px] max-w-full h-auto hidden dark:block" />
+          {/* As Website V3's footer: the header's lockup, a step larger (V3 sets
+              its wordmark at 18 px here against 15 px in the header, so
+              190 px × 18/15 = 228 px), and the tagline as a label beneath it.
+              The tagline lockup's floor is 400 px, which a phone cannot give;
+              COPY.md says to use the plain lockup and set the tagline apart. */}
+          <div className="flex flex-col gap-4">
+            <Link href="/" aria-label="Ground State — home" className="self-start">
+              <Lockup file="lockup-horizontal-light" className="w-[228px] h-auto dark:hidden" />
+              <Lockup file="lockup-horizontal-dark" className="w-[228px] h-auto hidden dark:block" />
+            </Link>
+            {/* Both sentences stay whole: a narrow screen breaks between them. */}
+            <p className="label">
+              {SITE_TAGLINE.split(/(?<=\.) /).map((sentence, i) => (
+                <Fragment key={sentence}>
+                  {i > 0 && " "}
+                  <span className="whitespace-nowrap">{sentence}</span>
+                </Fragment>
+              ))}
+            </p>
           </div>
           <nav aria-label="Footer" className="grid grid-cols-2 gap-x-12 gap-y-3 md:text-right">
             {nav.map((item) => (

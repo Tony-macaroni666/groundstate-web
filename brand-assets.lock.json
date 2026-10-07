@@ -59,9 +59,9 @@
       "registry_path": "brand/ground-state/png/favicon.ico"
     },
     "public/og-default.png": {
-      "sha256": "ae7e0d56f91d79f914af07241d79909604d3901c4fc5ab4d7f272e4d2108d29a",
+      "sha256": "78d09a0fca1d8f370d2c6991e361064ebc61f587c8de1aac1f979d5fff9d957b",
       "registry_path": null,
-      "note": "Owner-supplied social preview (lockup with tagline on bone, 1200x630), approved 17 Sep 2026. Not in the registry."
+      "note": "Social preview composed by scripts/compose-og.mjs from the canonical lockup-tagline-light.svg (registry sha256 796520eb…, public/brand/lockup-tagline-light.svg), centred on bone #F3F0E9, 2400x1260 (1200x630 at 2x). The lockup is as wide as its clear space (1 x cap height on every side) allows. Replaces the owner-supplied preview of 17 Sep 2026, which rebuilt the lockup. Not in the registry."
     }
   }
 }
