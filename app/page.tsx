@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { publishedArticles } from "@/lib/publications";
 import { publishedJournal } from "@/content/journal";
@@ -7,6 +8,7 @@ import { Button, Label, MetricBlock, SectionBlock } from "@/components/primitive
 import { EvidenceKey } from "@/components/evidence";
 import { Container, Section } from "@/components/layout";
 import { MethodFlow } from "@/components/diagram";
+import { SITE_CATEGORY_LINE } from "@/site.config";
 
 export default function Home() {
   const featured = publishedArticles().slice(0, 3);
@@ -16,7 +18,15 @@ export default function Home() {
       {/* Hero — the one place the tagline is the headline, because the logo
           sits directly above it and supplies the category. */}
       <Container className="pt-24 md:pt-32 pb-16 md:pb-24">
-        <Label className="mb-12">Human performance, traced to the evidence</Label>
+        {/* On a narrow phone the line may break only after the comma. */}
+        <Label className="mb-12">
+          {SITE_CATEGORY_LINE.split(/(?<=,) /).map((phrase, i) => (
+            <Fragment key={phrase}>
+              {i > 0 && " "}
+              <span className="whitespace-nowrap">{phrase}</span>
+            </Fragment>
+          ))}
+        </Label>
         <h1 className="display-hero max-w-breakout">
           Understand the system.
           <br />
