@@ -177,12 +177,12 @@ export default function StyleguidePage() {
               <div className="border rule p-8 bg-bone">
                 <Label className="mb-6">On bone</Label>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/brand/lockup-tagline-light.svg" alt="Ground State" className="w-full max-w-[320px]" />
+                <img src="/brand/lockup-horizontal-light.svg" alt="Ground State" className="w-[228px] h-auto" />
               </div>
               <div className="border border-ink-rule p-8 bg-ink">
                 <p className="label mb-6">On ink</p>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/brand/lockup-tagline-dark.svg" alt="Ground State" className="w-full max-w-[320px]" />
+                <img src="/brand/lockup-horizontal-dark.svg" alt="Ground State" className="w-[228px] h-auto" />
               </div>
             </div>
           </SectionBlock>

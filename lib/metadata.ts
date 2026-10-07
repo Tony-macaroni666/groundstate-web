@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import {
   OG_IMAGE,
+  SITE_CATEGORY_LINE,
   SITE_DESCRIPTION,
   SITE_NAME,
   absoluteUrl,
@@ -38,6 +39,11 @@ export function pageMetadata({
   noindex?: boolean;
 }): Metadata {
   const url = absoluteUrl(path);
+  // The category line leads every meta description: a search result is a cold
+  // arrival, and the brand manual locks the line in front of those.
+  const lead = description.startsWith(SITE_CATEGORY_LINE)
+    ? description
+    : `${SITE_CATEGORY_LINE}. ${description}`;
   const fullTitle = title ? `${title} · ${SITE_NAME}` : SITE_NAME;
   // A page-specific image wins; otherwise every page falls back to the default.
   const source = ogImage
@@ -57,7 +63,7 @@ export function pageMetadata({
 
   return {
     ...(title ? { title } : {}),
-    description,
+    description: lead,
     ...(url ? { alternates: { canonical: url } } : {}),
     robots: noindex
       ? { index: false, follow: false }
@@ -67,7 +73,7 @@ export function pageMetadata({
         : { index: false, follow: false },
     openGraph: {
       title: fullTitle,
-      description,
+      description: lead,
       siteName: SITE_NAME,
       locale: "en_GB",
       type,
@@ -79,7 +85,7 @@ export function pageMetadata({
     twitter: {
       card: image ? "summary_large_image" : "summary",
       title: fullTitle,
-      description,
+      description: lead,
       ...(image ? { images: image.map((i) => i.url) } : {}),
     },
   };
