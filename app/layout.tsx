@@ -13,10 +13,10 @@ import "./globals.css";
 
 const inter = localFont({
   src: [
-    { path: "../src/fonts/Inter-Regular.ttf", weight: "400", style: "normal" },
-    { path: "../src/fonts/Inter-Medium.ttf", weight: "500", style: "normal" },
-    { path: "../src/fonts/Inter-SemiBold.ttf", weight: "600", style: "normal" },
-    { path: "../src/fonts/Inter-Bold.ttf", weight: "700", style: "normal" },
+    { path: "../src/fonts/Inter-Regular.woff2", weight: "400", style: "normal" },
+    { path: "../src/fonts/Inter-Medium.woff2", weight: "500", style: "normal" },
+    { path: "../src/fonts/Inter-SemiBold.woff2", weight: "600", style: "normal" },
+    { path: "../src/fonts/Inter-Bold.woff2", weight: "700", style: "normal" },
   ],
   variable: "--font-inter",
   display: "swap",
