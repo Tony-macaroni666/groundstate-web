@@ -1,0 +1,7 @@
+# Next's build output under /_next/static/ is content-hashed: a changed file
+# gets a new name, so browsers may keep these for a year without asking again.
+# HTML, articles and everything else keep Cloudflare's default (revalidate).
+# The build appends per-article security headers below this file.
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
