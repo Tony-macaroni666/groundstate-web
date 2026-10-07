@@ -1,0 +1,20 @@
+{
+  "$comment": "The characters the self-hosted Inter WOFF2 files carry. The brand's website brief (AI-System brand/ground-state/WEBSITE-BRIEF.md §2.2) sets Inter subset to latin + latin-ext; the extra block is arrows and comparison signs the site and research copy use. scripts/subset-fonts.py reads this file; tests/fonts.test.ts fails if site copy uses a character outside it. Change the ranges here, then re-run the script.",
+  "latin": [
+    "U+0000-00FF", "U+0131", "U+0152-0153", "U+02BB-02BC", "U+02C6", "U+02DA", "U+02DC",
+    "U+0304", "U+0308", "U+0329", "U+2000-206F", "U+20AC", "U+2122", "U+2191", "U+2193",
+    "U+2212", "U+2215", "U+FEFF", "U+FFFD"
+  ],
+  "latin-ext": [
+    "U+0100-02BA", "U+02BD-02C5", "U+02C7-02CC", "U+02CE-02D7", "U+02DD-02FF", "U+0304",
+    "U+0308", "U+0329", "U+1D00-1DBF", "U+1E00-1E9F", "U+1EF2-1EFF", "U+2020", "U+20A0-20AB",
+    "U+20AD-20C0", "U+2113", "U+2C60-2C7F", "U+A720-A7FF"
+  ],
+  "extra": ["U+2190-2199", "U+2248", "U+2260", "U+2264-2265"],
+  "fonts": {
+    "Inter-Regular.ttf": "Inter-Regular.woff2",
+    "Inter-Medium.ttf": "Inter-Medium.woff2",
+    "Inter-SemiBold.ttf": "Inter-SemiBold.woff2",
+    "Inter-Bold.ttf": "Inter-Bold.woff2"
+  }
+}
