@@ -16,8 +16,9 @@
  * builds are off, see SECURITY.md); previews are for local and CI builds.
  */
 import { spawnSync } from "node:child_process";
-import { appendFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { contactSecretsPlan, withoutContactSecrets } from "./contact-secrets.mjs";
+import { addToEveryPath } from "./headers.mjs";
 
 const PRODUCTION_BRANCH = "main";
 
@@ -53,7 +54,7 @@ if (production && env.NEXT_PUBLIC_SITE_URL) {
 }
 run("npx", ["next", "build"]);
 run("npx", ["tsx", "scripts/export-publications.ts"]);
-if (!production) appendFileSync("out/_headers", "/*\n  X-Robots-Tag: noindex, nofollow\n");
+if (!production) writeFileSync("out/_headers", addToEveryPath(readFileSync("out/_headers", "utf8"), "X-Robots-Tag: noindex, nofollow"));
 
 // Last, once the site has built: copy the contact secrets into the Worker's
 // runtime secrets (scripts/contact-secrets.mjs). Values go on stdin; a failure

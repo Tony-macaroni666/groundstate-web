@@ -75,6 +75,12 @@ checks; it is the owner's deliberate act and is recorded on the PR.
   the dashboard's Builds secrets; the production build copies them over with
   `wrangler secret bulk` (values on stdin) and runs every other step without
   them. Only `main` is built, so no branch's code ever sees them.
+- **Every response carries the site's security headers** (`public/_headers`,
+  rule `/*`): HSTS for a year including subdomains, `nosniff`, `X-Frame-Options:
+  DENY`, a strict referrer policy and a permissions policy that refuses camera,
+  microphone, location, payment and USB. Cloudflare keeps one rule per path, so
+  the preview build adds its `noindex` to that same rule (`scripts/headers.mjs`)
+  instead of a second one that would drop these. The live check confirms them.
 - **Edge rewriting is off for article routes** (Email Address Obfuscation, Rocket
   Loader, Automatic HTTPS Rewrites, Web Analytics auto-injection, Zaraz,
   Cloudflare Fonts) so the served bytes stay the signed bytes. The live hash
@@ -84,8 +90,11 @@ checks; it is the owner's deliberate act and is recorded on the PR.
 
 - The signature authenticates the publisher machine, not the human approver.
   Approval identity on the backend is procedural, not cryptographic.
-- Workflow actions are referenced by major version (`actions/checkout@v4`), not
+- Workflow actions are referenced by major version (`actions/checkout@v6`), not
   pinned to a commit SHA.
+- Pages other than articles carry no Content-Security-Policy yet. Next's inline
+  scripts and the Turnstile widget need a nonce- or hash-based policy; articles
+  have their own strict one.
 - A withdrawal returns the site's 404, not a withdrawal notice.
 
 ## Reporting
