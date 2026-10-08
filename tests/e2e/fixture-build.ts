@@ -3,9 +3,10 @@
 //   npm run test:e2e
 //
 // Runs in a throwaway copy of this repository, never in the checkout itself:
-// it pins a key generated for this run in the copy's signers file, adds one
-// signed fixture bundle, and runs the exact Cloudflare build (scripts/build-cf.mjs)
-// as main with the production origin. It then checks that
+// it trusts a key generated for this run beside the pinned publisher key (so the
+// real bundles in the copy keep verifying), adds one signed fixture bundle, and
+// runs the exact Cloudflare build (scripts/build-cf.mjs) as main with the
+// production origin. It then checks that
 //   - the article is served byte for byte at /research/<slug>,
 //   - the research listing, the home page and the sitemap list it from its manifest,
 //   - _publications.json and the article headers are there,
@@ -16,7 +17,7 @@
 // instead, lives only in the temporary copy, and is deleted afterwards.
 
 import { spawnSync } from "node:child_process";
-import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { appendFileSync, cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { manifestSelfHash, sha256Hex } from "../../lib/publications/canonical";
@@ -40,7 +41,7 @@ function copyRepo(): string {
 
 function addBundle(root: string): Buffer {
   const key = testKey();
-  writeFileSync(join(root, ".github/publication-signers"), allowedSignersLine(key, SIGNER_PRINCIPAL, SIGNATURE_NAMESPACE) + "\n");
+  appendFileSync(join(root, ".github/publication-signers"), allowedSignersLine(key, SIGNER_PRINCIPAL, SIGNATURE_NAMESPACE) + "\n");
   const article = Buffer.from(
     [
       "<!doctype html>",
@@ -136,7 +137,8 @@ try {
   );
   expect(readFileSync(join(out, "sitemap.xml"), "utf8").includes(`${CANONICAL_ORIGIN}${ROUTE}`), "the sitemap lists it");
   const deployment = JSON.parse(readFileSync(join(out, "_publications.json"), "utf8"));
-  expect(deployment.publications?.[0]?.article_sha256 === sha256Hex(article), "_publications.json carries the article hash");
+  const fixture = (deployment.publications ?? []).find((p: { publication_id: string }) => p.publication_id === "GSP-9999");
+  expect(fixture?.article_sha256 === sha256Hex(article), "_publications.json carries the article hash");
   expect(readFileSync(join(out, "_headers"), "utf8").includes(`${ROUTE}\n  Content-Security-Policy:`), "the article route has its security headers");
   const headers = readFileSync(join(out, "_headers"), "utf8");
   expect(headers.split("\n").filter((l) => l === "/*").length === 1 && headers.includes("Strict-Transport-Security:"), "one rule for every path, with the site's security headers");
@@ -150,7 +152,13 @@ try {
   // An unlisted build (any branch but main, so no origin): nothing may carry an
   // absolute URL — least of all one Next made up from localhost.
   expect(build(unlisted, null, "e2e-unlisted") === 0, "the unlisted build (no origin) succeeds");
-  const pages = htmlFiles(join(unlisted, "out")).map((f) => readFileSync(f, "utf8"));
+  // Signed articles are served as signed, canonical to production included; the
+  // gate checks them. These checks are for the pages the site itself renders.
+  const signed = new Set(
+    (JSON.parse(readFileSync(join(unlisted, "out/_publications.json"), "utf8")).publications as { route: string }[])
+      .map((p) => join(unlisted, "out", `${p.route}.html`)),
+  );
+  const pages = htmlFiles(join(unlisted, "out")).filter((f) => !signed.has(f)).map((f) => readFileSync(f, "utf8"));
   expect(pages.length > 0 && pages.every((p) => !p.includes("localhost")), "no unlisted page mentions localhost");
   expect(pages.every((p) => !p.includes('rel="canonical"')), "no unlisted page carries a canonical");
   expect(readFileSync(join(unlisted, "out/index.html"), "utf8").includes('<meta name="robots" content="noindex, nofollow"/>'), "the unlisted home page is noindex");
