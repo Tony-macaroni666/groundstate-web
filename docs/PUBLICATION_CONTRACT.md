@@ -97,8 +97,12 @@ The publication-profile render, byte for byte. The gate refuses it unless it is:
 - valid UTF-8, starting `<!doctype html>`, declaring `<meta charset="utf-8">`, no byte-order mark;
 - **self-contained**: every `src`/`srcset`/`url(…)` is a `data:` URI (fonts and
   images inline). Only `<a href>` may leave the page;
-- **script-free**: no `<script>`, `<iframe>`, `<object>`, `<embed>`, `<form>`,
-  `<base>`, `<meta http-equiv>`, inline event handlers, `javascript:` or `@import`;
+- **script-free but for the theme switch**: no `<iframe>`, `<object>`, `<embed>`,
+  `<form>`, `<base>`, `<meta http-equiv>`, inline event handlers, `javascript:` or
+  `@import`, and no `<script>` except, at most once, `<script>` + the pinned theme
+  script + `</script>` exactly (`ARTICLE_THEME_SCRIPT` in
+  `lib/publications/contract.ts`; how to embed it, with the site header, in
+  [`docs/article-chrome/`](article-chrome/README.md));
 - carrying **exactly one `<link>`**: `<link rel="canonical" href="https://groundstatemethod.com/research/<slug>">`;
 - not `noindex`;
 - free of review and internal markers: `Not authorised/authorized for publication`,

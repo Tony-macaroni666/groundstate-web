@@ -9,16 +9,22 @@
 //   out/_publications.json  what this build serves, for the publisher's live check
 //   out/_headers            per-article security headers (headers, not bytes)
 
+import { createHash } from "node:crypto";
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { sha256Hex } from "../lib/publications/canonical";
+import { ARTICLE_THEME_SCRIPT } from "../lib/publications/contract";
 import { verifyPublications, type VerifyReport } from "../lib/publications/verify";
 
 export const DEPLOYMENT_SCHEMA = "ground-state.web-deployment.v1";
 
-/** No script, no external resource, no framing: the page is a document and nothing else. */
+/**
+ * No external resource, no framing, and no script but the pinned theme script,
+ * admitted by its hash: the page is a document with a light/dark switch.
+ */
 export const ARTICLE_CSP =
-  "default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+  `default-src 'none'; script-src 'sha256-${createHash("sha256").update(ARTICLE_THEME_SCRIPT, "utf8").digest("base64")}'; ` +
+  "style-src 'unsafe-inline'; img-src data:; font-src data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 
 export function exportPublications(opts: { root: string; out: string; report?: VerifyReport }): string[] {
   const report = opts.report ?? verifyPublications({ root: opts.root });

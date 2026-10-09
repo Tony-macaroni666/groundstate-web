@@ -64,8 +64,11 @@ checks; it is the owner's deliberate act and is recorded on the PR.
   access to the backend repository.
 - **No secrets** in this repository, its builds or its workflows. Workflows run
   with a read-only token and `persist-credentials: false`.
-- **Articles cannot run code.** They carry no script by contract, and the route's
-  Content-Security-Policy forbids scripts, external loads and framing anyway.
+- **Articles run one pinned script and nothing else.** The light/dark switch
+  (`ARTICLE_THEME_SCRIPT`) is the only script the gate admits, byte for byte, and
+  the route's Content-Security-Policy admits it by its hash alone, so a changed or
+  added script does not run even if it got past the gate. It reads and writes one
+  `localStorage` key, `gs-theme`. The policy forbids external loads and framing.
 - **One server route.** The Worker script runs only for `/api/*`
   (`run_worker_first`); every page and every article is served by the assets
   layer and never passes through it. Its one route, `POST /api/contact`, accepts

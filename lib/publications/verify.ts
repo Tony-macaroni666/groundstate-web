@@ -11,6 +11,7 @@ import Ajv2020 from "ajv/dist/2020";
 import schema from "../../schemas/ground-state.web-publication.v1.schema.json";
 import { manifestSelfHash, sha256Hex } from "./canonical";
 import {
+  ARTICLE_THEME_SCRIPT,
   ARTICLE_FILE,
   CANONICAL_ORIGIN,
   FORBIDDEN_ELEMENTS,
@@ -94,8 +95,12 @@ export function inspectArticle(html: Buffer, route: string, allowFixtureMarker =
   for (const [pattern, why] of FORBIDDEN_PATTERNS) {
     if (pattern.test(text)) errors.push(`article.html matches ${pattern} (${why})`);
   }
+  // The pinned theme script is the one script allowed, once, byte for byte.
+  const themeScript = `<script>${ARTICLE_THEME_SCRIPT}</script>`;
+  if (text.split(themeScript).length > 2) errors.push("article.html carries the theme script more than once");
+  const withoutThemeScript = text.replace(themeScript, "");
   for (const element of FORBIDDEN_ELEMENTS) {
-    if (new RegExp(`<${element.replace(" ", "\\s+")}\\b`, "i").test(text)) errors.push(`article.html contains <${element}>`);
+    if (new RegExp(`<${element.replace(" ", "\\s+")}\\b`, "i").test(withoutThemeScript)) errors.push(`article.html contains <${element}>`);
   }
   if (/\son[a-z]+\s*=/i.test(text)) errors.push("article.html contains an inline event handler");
   if (/javascript:/i.test(text)) errors.push("article.html contains a javascript: URL");

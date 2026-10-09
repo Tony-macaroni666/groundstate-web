@@ -1,8 +1,10 @@
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { sha256Hex } from "../lib/publications/canonical";
+import { ARTICLE_THEME_SCRIPT } from "../lib/publications/contract";
 import { verifyPublications } from "../lib/publications/verify";
 import { ARTICLE_CSP, exportPublications } from "../scripts/export-publications";
 import { FixtureRepo } from "./helpers/bundle";
@@ -51,6 +53,13 @@ describe("export into the static build", () => {
     expect(headers).toContain("/research/gs-fixture-article\n");
     expect(headers).toContain(`Content-Security-Policy: ${ARTICLE_CSP}`);
     expect(headers).toMatch(/\/_publications\.json\n  Cache-Control: no-store/);
+  });
+
+  it("admits the pinned theme script by its hash and no other script", () => {
+    const hash = createHash("sha256").update(ARTICLE_THEME_SCRIPT, "utf8").digest("base64");
+    expect(ARTICLE_CSP).toContain(`script-src 'sha256-${hash}';`);
+    expect(ARTICLE_CSP.match(/script-src[^;]*/)?.[0]).toBe(`script-src 'sha256-${hash}'`);
+    expect(ARTICLE_CSP).toContain("default-src 'none'");
   });
 
   it("serves only the newest version, and nothing for a withdrawn route", () => {
