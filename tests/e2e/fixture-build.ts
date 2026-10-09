@@ -21,7 +21,7 @@ import { appendFileSync, cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSy
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { manifestSelfHash, sha256Hex } from "../../lib/publications/canonical";
-import { CANONICAL_ORIGIN, SIGNATURE_NAMESPACE, SIGNER_PRINCIPAL } from "../../lib/publications/contract";
+import { ARTICLE_THEME_SCRIPT, CANONICAL_ORIGIN, SIGNATURE_NAMESPACE, SIGNER_PRINCIPAL } from "../../lib/publications/contract";
 import { allowedSignersLine, sshSign, testKey } from "../helpers/sign";
 
 const SOURCE = process.cwd();
@@ -48,6 +48,7 @@ function addBundle(root: string): Buffer {
       '<html lang="en"><head><meta charset="utf-8">',
       `<title>${TITLE}</title>`,
       `<link rel="canonical" href="${CANONICAL_ORIGIN}${ROUTE}">`,
+      `<script>${ARTICLE_THEME_SCRIPT}</script>`,
       "<style>body{background:#f3f0e9;color:#171a19}</style>",
       "</head><body><p>End-to-end build check. Test content only; it says nothing about any subject.</p></body></html>",
       "",

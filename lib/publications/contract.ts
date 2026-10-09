@@ -57,8 +57,20 @@ export const FORBIDDEN_PATTERNS: [RegExp, string][] = [
   [/GSFB-|GSCG-|GSAF-/i, "internal job identifier"],
 ];
 
-/** Elements a self-contained, script-free evidence page has no use for. */
+/** Elements a self-contained evidence page has no use for. */
 export const FORBIDDEN_ELEMENTS = ["script", "iframe", "object", "embed", "form", "base", "frame", "frameset", "applet", "meta http-equiv"];
+
+/**
+ * The one script an article may carry, as `<script>…</script>` with exactly
+ * these bytes. It applies the reader's light/dark choice, which the site stores
+ * under "gs-theme", and lets the header's [data-gs-theme-toggle] button change
+ * it, so an article and the site share one switch. It reads and writes that one
+ * key and nothing else. The article CSP admits it by hash alone
+ * (scripts/export-publications.ts); any other script, or this one with a byte
+ * changed, is refused. docs/article-chrome/theme-script.js is the same text.
+ */
+export const ARTICLE_THEME_SCRIPT =
+  '(function(){var r=document.documentElement,k="gs-theme";function a(t){r.classList.toggle("dark",t==="dark");r.classList.toggle("light",t==="light")}try{var s=localStorage.getItem(k);if(s==="dark"||s==="light")a(s)}catch(e){}document.addEventListener("click",function(e){var b=e.target&&e.target.closest?e.target.closest("[data-gs-theme-toggle]"):null;if(!b)return;var d=r.classList.contains("dark")||(!r.classList.contains("light")&&matchMedia("(prefers-color-scheme: dark)").matches);var t=d?"light":"dark";a(t);try{localStorage.setItem(k,t)}catch(e){}})})()';
 
 export type Domain = "strength-conditioning" | "musculoskeletal" | "recovery" | "nutrition" | "behaviour";
 export type EvidenceStatus = "supported" | "contested" | "uncertain" | "unsupported";

@@ -1,6 +1,7 @@
 import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { ARTICLE_THEME_SCRIPT } from "../lib/publications/contract";
 import { inspectArticle, verifyPublications } from "../lib/publications/verify";
 import { FixtureRepo, fixtureArticle } from "./helpers/bundle";
 import { sshSign } from "./helpers/sign";
@@ -128,6 +129,19 @@ describe("article content", () => {
     ['<meta name="robots" content="noindex">', /noindex/],
     ['<link rel="stylesheet" href="https://example.org/x.css">', /no <link> other than rel=canonical/],
   ])("refuses %s", (extra, why) => {
+    expect(problems(extra)).toMatch(why);
+  });
+
+  it("accepts the pinned theme script, once, byte for byte", () => {
+    expect(problems(`<script>${ARTICLE_THEME_SCRIPT}</script>`)).toBe("");
+  });
+
+  it.each([
+    ["changed by one byte", `<script>${ARTICLE_THEME_SCRIPT.replace("gs-theme", "gs-themf")}</script>`, /<script>/],
+    ["with an attribute", `<script type="module">${ARTICLE_THEME_SCRIPT}</script>`, /<script>/],
+    ["beside another script", `<script>${ARTICLE_THEME_SCRIPT}</script><script>alert(1)</script>`, /<script>/],
+    ["twice", `<script>${ARTICLE_THEME_SCRIPT}</script><script>${ARTICLE_THEME_SCRIPT}</script>`, /more than once/],
+  ])("refuses the theme script %s", (_, extra, why) => {
     expect(problems(extra)).toMatch(why);
   });
 
