@@ -23,6 +23,7 @@ import { join } from "node:path";
 import { manifestSelfHash, sha256Hex } from "../../lib/publications/canonical";
 import { ARTICLE_THEME_SCRIPT, CANONICAL_ORIGIN, SIGNATURE_NAMESPACE, SIGNER_PRINCIPAL } from "../../lib/publications/contract";
 import { allowedSignersLine, sshSign, testKey } from "../helpers/sign";
+import { fixturePublicationDate } from "../helpers/fixture-date";
 
 const SOURCE = process.cwd();
 const SLUG = "e2e-build-check";
@@ -40,6 +41,12 @@ function copyRepo(): string {
 }
 
 function addBundle(root: string): Buffer {
+  const existingDates = readdirSync(join(root, "publications"), { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => JSON.parse(readFileSync(join(root, "publications", entry.name, "manifest.json"), "utf8")))
+    .map((manifest) => manifest.listing?.published_on)
+    .filter((date): date is string => typeof date === "string");
+  const publishedOn = fixturePublicationDate(existingDates);
   const key = testKey();
   appendFileSync(join(root, ".github/publication-signers"), allowedSignersLine(key, SIGNER_PRINCIPAL, SIGNATURE_NAMESPACE) + "\n");
   const article = Buffer.from(
@@ -67,7 +74,7 @@ function addBundle(root: string): Buffer {
       dek: "Test content for the end-to-end build check.",
       domain: "recovery",
       evidence_status: "contested",
-      published_on: "2026-10-03",
+      published_on: publishedOn,
       evidence_reviewed_on: null,
     },
     files: [{ path: "article.html", media_type: "text/html; charset=utf-8", bytes: article.length, sha256: sha256Hex(article) }],
@@ -77,7 +84,7 @@ function addBundle(root: string): Buffer {
       visual_approval_sha256: "2".repeat(64),
       gser_artifact_sha256: "3".repeat(64),
       publication_authorization_sha256: "4".repeat(64),
-      authorized_at: "2026-10-03T09:00:00Z",
+      authorized_at: `${publishedOn}T09:00:00Z`,
     },
     exporter: { name: "e2e-check", version: "0.0.0", source_commit: "0".repeat(40) },
     manifest_sha256: "",
